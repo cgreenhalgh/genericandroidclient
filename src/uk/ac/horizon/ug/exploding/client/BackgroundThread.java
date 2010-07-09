@@ -30,6 +30,7 @@ import java.util.Set;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
@@ -67,9 +68,13 @@ public class BackgroundThread implements Runnable {
 	private static final String MESSAGES_PATH = "messages";
 	// 10 seconds for testing?!
 	private static final int POLL_INTERVAL_MS = 10000;
+	private static Handler handler;
 	/** cons - private */
 	private BackgroundThread() {
 		super();
+	}
+	public static void setHandler(Handler h) {
+		handler = h;
 	}
 	/** singleton */
 	private static Thread singleton;
@@ -398,6 +403,19 @@ public class BackgroundThread implements Runnable {
 			fireClientStateChanged(currentClientState.clone());
 		}
 	}
+	/** set location and zone and fire; Note called by Location thread via ZoneService, not
+	 * current client/background thread. */
+	static synchronized void setLocation(Location location, String zoneID) {
+		if (currentClientState!=null) {
+			currentClientState.setLastLocation(location);
+			// either could be null!
+			if (zoneID!=currentClientState.getZoneID() && (zoneID==null || currentClientState.getZoneID()==null || !zoneID.equals(currentClientState.getZoneID())))
+				currentClientState.setZoneID(zoneID);
+			ClientState clone = currentClientState.clone();
+			Log.d(TAG,"setLocation("+zoneID+") - current="+currentClientState.getZoneID()+"/"+currentClientState.isZoneChanged()+", clone="+clone.getZoneID()+"/"+clone.isZoneChanged());
+			fireClientStateChanged(clone);
+		}
+	}
 	/** set game status and fire */
 	private static synchronized void setGameStatus(GameStatus gameStatus) {
 		if (singleton!=Thread.currentThread()) {
@@ -410,7 +428,18 @@ public class BackgroundThread implements Runnable {
 		}
 	}
 	/** fire event listeners */
-	private static void fireClientStateChanged(ClientState clientState) {
+	private static void fireClientStateChanged(final ClientState clientState) {
+		if (handler!=null)
+			handler.post(new Runnable() {
+				public void run() {
+					fireClientStateChangedInHandler(clientState);
+				}
+			});
+		else
+			fireClientStateChangedInHandler(clientState);
+	}
+	/** fire event listeners */
+	private static void fireClientStateChangedInHandler(final ClientState clientState) {
 		switch(clientState.getClientStatus()) {
 		case CANCELLED_BY_USER:
 		case ERROR_DOING_LOGIN:
@@ -435,7 +464,7 @@ public class BackgroundThread implements Runnable {
 							break;
 						}
 					if (!stateMatch) {
-						Log.d(TAG,"Skip listener "+li.listener.get()+" on types ("+li.types+" vs "+clientState.getChangedTypes());
+						//Log.d(TAG,"Skip listener "+li.listener.get()+" on types ("+li.types+" vs "+clientState.getChangedTypes());
 					}
 				}
 				if (stateMatch ||
@@ -448,9 +477,11 @@ public class BackgroundThread implements Runnable {
 						listener.clientStateChanged(clientState);
 					}
 					catch (Exception e) {
-						Log.e(TAG, "Error calling listener "+listener, e);
+						//Log.e(TAG, "Error calling listener "+listener, e);
 					}
 				}
+				//else if (li.flags!=0)
+				//Log.d(TAG,"Skip listener "+li.listener.get()+" on flags: "+li.flags+" vs "+clientState.isStatusChanged()+","+clientState.isLocationChanged()+","+clientState.isZoneChanged());
 			}
 		}
 	}

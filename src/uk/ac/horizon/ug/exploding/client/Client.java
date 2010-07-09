@@ -19,6 +19,7 @@
  */
 package uk.ac.horizon.ug.exploding.client;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -170,14 +171,16 @@ public class Client {
 		HttpResponse reply = httpClient.execute(request);
 
 		StatusLine statusLine = reply.getStatusLine();
+		Log.d(TAG, "Http status on login: "+statusLine);
 		int status = statusLine.getStatusCode();
 		if (status!=200) {
 			if (reply.getEntity()!=null)
 				reply.getEntity().consumeContent();
 			throw new IOException("Error response ("+status+") from server: "+statusLine.getReasonPhrase());
 		}
-		//Log.d(TAG, "Http status on login: "+statusLine);
-		messages = (List<Message>)xs.fromXML(reply.getEntity().getContent());
+		BufferedInputStream in = new BufferedInputStream(reply.getEntity().getContent());
+		Log.d(TAG,"Reading HTTP response -> XML");
+		messages = (List<Message>)xs.fromXML(in);
 		reply.getEntity().consumeContent();
 
 		Log.i(TAG, "Response "+messages.size()+" messages: "+messages);
@@ -278,6 +281,26 @@ public class Client {
 		}
 		BackgroundThread.cachedStateChanged(this, changedTypes);
 		return messages;
+	}
+	/** remove a Fact from the cache without signalling state change */
+	public void removeFactSilent(Object fact) {
+		if (fact==null)
+			return;
+		synchronized(facts) {
+			String typeName = getFactType(fact);
+			HashMap<Object,Object> typeFacts = facts.get(typeName);
+			if (typeFacts!=null) {
+				Object id = getFactID(fact);
+				if (id!=null) {
+					if (typeFacts.remove(id)==null)
+						Log.w(TAG, "removeFactSilent could not find "+typeName+" "+id);
+				} 
+				else
+					Log.w(TAG,"removeFactSilent called with object without id: "+fact);
+			}
+			else
+				Log.w(TAG, "removeFactSilent could not find any "+typeName);
+		}
 	}
 	private static String getFactType(Object o) {
 		return o.getClass().getName();		

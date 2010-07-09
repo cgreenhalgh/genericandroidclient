@@ -44,10 +44,13 @@ public class ZoneService {
 		double longitude = loc.getLongitude();
 		String zone = getZone(context, latitude, longitude);
 		Log.d(TAG, "UpdateLocation to "+latitude+","+longitude+", zone="+zone);
+		BackgroundThread.setLocation(loc, zone);
 	}
 	
 	static public String getZone(Context context, double latitude, double longitude){
 		ClientState clientState = BackgroundThread.getClientState(context);
+		if (clientState==null || clientState.getCache()==null) 
+			return null;
 		List<Object> zones = clientState.getCache().getFacts(Zone.class.getName());
     	for(Object z : zones)
 		{

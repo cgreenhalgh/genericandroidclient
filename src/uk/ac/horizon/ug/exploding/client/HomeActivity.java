@@ -50,6 +50,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        BackgroundThread.setHandler(handler);
         setContentView(R.layout.main);
         BackgroundThread.addClientStateListener(this, this, ClientState.Part.STATUS.flag());
         
@@ -160,15 +161,6 @@ public class HomeActivity extends Activity implements ClientStateListener {
 	/** NB this is not the GUI thread */
 	@Override
 	public void clientStateChanged(final ClientState clientState) {
-		handler.post(new Runnable() {
-			@Override
-			public void run() {
-				guiClientStateChanged(clientState);
-			}
-		});
-	}
-	/** this is the GUI thread */
-	public void guiClientStateChanged(ClientState clientState) {
 		Log.d(TAG, "clientStateChanged: "+clientState);
 		// TODO Auto-generated method stub
 		//if (clientState.getClientStatus()!=ClientStatus.LOGGING_IN && clientState.getClientStatus()!=ClientStatus.GETTING_STATE)

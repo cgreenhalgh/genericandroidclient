@@ -36,14 +36,11 @@ public class PlayerStatusActivity extends Activity implements ClientStateListene
 
 	private static final String TAG = "PlayerStatus";
 
-	private static Handler handler;
-	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.player_status);
-		handler = new Handler();
 		BackgroundThread.addClientStateListener(this, this, Player.class.getName());
 		// initialise
 		clientStateChanged(BackgroundThread.getClientState(this));
@@ -51,15 +48,8 @@ public class PlayerStatusActivity extends Activity implements ClientStateListene
 
 	@Override
 	public void clientStateChanged(final ClientState clientState) {
-		handler.post(new Runnable() {
-			public void run() {
-				clientStateChangedInThread(clientState);
-			}
-		});
-	}
-	private void clientStateChangedInThread(final ClientState clientState) {
 		Player player = null;
-		if (clientState!=null) {
+		if (clientState!=null && clientState.getCache()!=null) {
 		// get players...
 			List<Object> facts = clientState.getCache().getFacts(Player.class.getName());
 			Log.d(TAG,"Found "+facts.size()+" Player objects in cache");

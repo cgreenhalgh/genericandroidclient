@@ -19,13 +19,18 @@
  */
 package uk.ac.horizon.ug.exploding.client;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import uk.ac.horizon.ug.exploding.client.model.Member;
+import uk.ac.horizon.ug.exploding.client.model.Message;
+
 import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.MyLocationOverlay;
-import com.google.android.maps.OverlayItem;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -34,6 +39,7 @@ import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -45,61 +51,14 @@ import android.widget.Toast;
  * @author cmg
  *
  */
-public class GameMapActivity extends MapActivity /*implements LocationListener*/ {
+public class GameMapActivity extends MapActivity implements ClientStateListener {
 
 	private static final String TAG = "Map";
 	private static final int MILLION = 1000000;
 	private static final int MIN_ZOOM_LEVEL = 14;
 	private MyLocationOverlay myLocationOverlay;
-	private MyOverlay itemOverlay;
+	private MyMapOverlay itemOverlay;
 	
-	/** just a test for now */
-	static class MyItem extends OverlayItem {
-
-		public MyItem(GeoPoint point, String title, String snippet) {
-			super(point, title, snippet);
-			// TODO Auto-generated constructor stub
-		}
-
-		@Override
-		public Drawable getMarker(int stateBitset) {
-			// TODO Auto-generated method stub
-			//Log.d(TAG,"getmarker("+stateBitset+")="+this.mMarker);
-			return this.mMarker;
-			//return super.getMarker(stateBitset);
-		}
-		
-	}
-	/** just a test for now */
-	static class MyOverlay extends ItemizedOverlay<MyItem> {
-		private Drawable defaultMarker;
-		
-		public MyOverlay(Drawable defaultMarker) {
-			super(defaultMarker);
-			boundCenter(defaultMarker);
-			//this.defaultMarker = defaultMarker;
-			// TODO Auto-generated constructor stub
-		}
-		public void init() {
-			populate();
-		}
-		@Override
-		protected MyItem createItem(int i) {
-			// TODO Auto-generated method stub
-			//return null; //new MyItem();
-			Log.d(TAG,"CreateItem("+i+"), drawable="+defaultMarker);
-			MyItem item = new MyItem(new GeoPoint(52891937,-1157297), "Test"+i, null);
-			//item.setMarker(defaultMarker);
-			return item;
-		}
-
-		@Override
-		public int size() {
-			// TODO Auto-generated method stub
-			return 1;
-		}
-		
-	}
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
@@ -120,15 +79,60 @@ public class GameMapActivity extends MapActivity /*implements LocationListener*/
 			Drawable drawable = res.getDrawable(R.drawable.icon/*android.R.drawable.btn_star*/);
 			drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
 			Log.d(TAG,"defaultDrawable="+drawable);
-			itemOverlay = new MyOverlay(drawable);
-			itemOverlay.init();
+			ClientState clientState = BackgroundThread.getClientState(this);
+			itemOverlay = new MyMapOverlay(drawable, clientState);
+			BackgroundThread.addClientStateListener(itemOverlay, this, Member.class.getName());
 			mapView.getOverlays().add(itemOverlay);
 		}
 		catch (Exception e) {
 			Log.e(TAG, "Error loading map view: "+e);
 		}
+		Set<String> types = new HashSet<String>();
+		types.add(Message.class.getName());
+		BackgroundThread.addClientStateListener(this, this, ClientState.Part.ZONE.flag(), types);
+		ClientState clientState = BackgroundThread.getClientState(this);
+		clientStateChanged(clientState);
+	}
+	private static final long ZONE_VIBRATE_MS = 500;
+
+	@Override
+	public void clientStateChanged(final ClientState clientState) {
+		if (clientState==null)
+			return;
+		if (clientState.isZoneChanged())
+			zoneChanged(clientState.getZoneID());
+		handleMessages(clientState);
 	}
 
+	/**
+	 * @param zoneID
+	 */
+	protected void zoneChanged(String zoneID) {
+		Log.d(TAG, "Zone change to "+zoneID);
+		if (zoneID!=null) {
+			Vibrator vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
+			if (vibrator!=null)
+				vibrator.vibrate(ZONE_VIBRATE_MS);
+			Toast.makeText(GameMapActivity.this, "Entered zone "+zoneID, Toast.LENGTH_SHORT).show();
+		}
+	}		
+	/**
+	 * @param clientState
+	 */
+	private void handleMessages(ClientState clientState) {
+		if (clientState==null || clientState.getCache()==null) 
+			return;
+		List<Object> messages = clientState.getCache().getFacts(Message.class.getName());
+		if (messages.size()==0)
+			return;
+		Log.d(TAG,"Messages: "+messages.size());
+		
+		for (Object m : messages) {
+			Message message = (Message)m;
+			NotificationUtils.postMessage(this, message);
+			clientState.getCache().removeFactSilent(message);
+		}
+	}
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
     	MenuInflater inflater = getMenuInflater();    
@@ -198,9 +202,7 @@ public class GameMapActivity extends MapActivity /*implements LocationListener*/
 		myLocationOverlay.enableMyLocation();
 //		LocationUtils.registerOnThread(this, this, null);
 //		centreOnMyLocation();
-	}
-
-	
+	}		
 //	@Override
 //	public void onLocationChanged(Location location) {
 //		// TODO Auto-generated method stub
