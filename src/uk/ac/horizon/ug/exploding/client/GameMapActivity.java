@@ -158,8 +158,13 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 		{
 			// check if we can...
 			Player player = getPlayer();
-			if (player==null || !player.isSetCanAuthor() || !player.getCanAuthor()) {
-				Toast.makeText(this, "You cannot author yet - keep playing", Toast.LENGTH_LONG).show();
+			// Oops - this is for events
+			//if (player==null || !player.isSetCanAuthor() || !player.getCanAuthor()) {
+			//	Toast.makeText(this, "You cannot author yet - keep playing", Toast.LENGTH_LONG).show();
+			//	return true;
+			//}
+			if (player==null || !player.isSetNewMemberQuota() || player.getNewMemberQuota()<1) {
+				Toast.makeText(this, "You cannot create a member yet - keep playing", Toast.LENGTH_LONG).show();
 				return true;
 			}
 			Intent intent = new Intent();
