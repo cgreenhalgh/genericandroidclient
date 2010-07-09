@@ -3,4 +3,5 @@
   xmlns:android="http://schemas.android.com/apk/res/android">
 <item android:id="@+id/map_my_location" android:title="My Location" android:titleCondensed="Me"></item>
 <item android:id="@+id/map_menu_gps" android:title="GPS Status" android:titleCondensed="GPS" android:icon="@drawable/gps"></item>
+<item android:id="@+id/map_menu_create_member" android:title="Create Member" android:titleCondensed="Create"></item>
 </menu>

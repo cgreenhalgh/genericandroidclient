@@ -25,6 +25,7 @@ import java.util.Set;
 
 import uk.ac.horizon.ug.exploding.client.model.Member;
 import uk.ac.horizon.ug.exploding.client.model.Message;
+import uk.ac.horizon.ug.exploding.client.model.Player;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
@@ -153,8 +154,34 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 			startActivity(intent);
 			return true;
 		}			
+		case R.id.map_menu_create_member:
+		{
+			// check if we can...
+			Player player = getPlayer();
+			if (player==null || !player.isSetCanAuthor() || !player.getCanAuthor()) {
+				Toast.makeText(this, "You cannot author yet - keep playing", Toast.LENGTH_LONG).show();
+				return true;
+			}
+			Intent intent = new Intent();
+			intent.setClass(this, CreateMemberActivity.class);
+			startActivity(intent);
+			return true;
+		}						
 		}
 		return super.onOptionsItemSelected(item);
+	}
+
+	/**
+	 * @return
+	 */
+	private Player getPlayer() {
+		Client cache = BackgroundThread.getClientState(this).getCache();
+		if (cache==null)
+			return null;
+		List<Object> players = cache.getFacts(Player.class.getName());
+		if (players.size()==0)
+			return null;
+		return (Player)players.get(0);
 	}
 
 	private void centreOnMyLocation() {
