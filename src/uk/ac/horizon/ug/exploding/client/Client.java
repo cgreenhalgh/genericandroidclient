@@ -153,7 +153,7 @@ public class Client {
 		return sendMessages(messages);
 	}
 	/** internal async send */
-	public List<Message> sendMessages(List<Message> messages) throws IOException {
+	public synchronized List<Message> sendMessages(List<Message> messages) throws IOException {
 		HttpPost request  = new HttpPost(conversationUrl);
 		Log.i(TAG,"SendMessages to "+request.getURI()+", requestline="+request.getRequestLine());
 		request.setHeader("Content-Type", "application/xml");
