@@ -1,22 +1,4 @@
-/**
- * Copyright 2010 The University of Nottingham
- * 
- * This file is part of GenericAndroidClient.
- *
- *  GenericAndroidClient is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  GenericAndroidClient is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public License
- *  along with GenericAndroidClient.  If not, see <http://www.gnu.org/licenses/>.
- * 
- */
+
 package uk.ac.horizon.ug.exploding.client.model;
 /** 
  * Identity element is ID.
@@ -145,6 +127,40 @@ public class Player
    */
   public void unsetGameID()  {
     this._gameID = null; 
+  }
+
+  /** internal value - 
+   */
+  protected java.lang.Integer _colourRef;
+  
+  /** getter - 
+   */
+  public java.lang.Integer getColourRef()
+  {
+  
+    return _colourRef;
+    
+  }
+
+  /** setter - 
+   */
+  public void setColourRef(java.lang.Integer colourRef)
+  {
+  
+    this._colourRef = colourRef;
+    
+  }
+
+  /** is set?
+   */
+  public boolean isSetColourRef() {
+    return this._colourRef != null; 
+  }
+
+  /** unset
+   */
+  public void unsetColourRef()  {
+    this._colourRef = null; 
   }
 
   /** internal value - 
@@ -334,6 +350,10 @@ public class Player
         (_gameID==null || oo._gameID==null ||
          !_gameID.equals(oo._gameID)))
       return false;
+    if (_colourRef!=oo._colourRef &&
+        (_colourRef==null || oo._colourRef==null ||
+         !_colourRef.equals(oo._colourRef)))
+      return false;
     if (_position!=oo._position &&
         (_position==null || oo._position==null ||
          !_position.equals(oo._position)))
@@ -363,6 +383,7 @@ public class Player
       if (_ID!=null) val = val ^ _ID.hashCode();
     if (_name!=null) val = val ^ _name.hashCode();
     if (_gameID!=null) val = val ^ _gameID.hashCode();
+    if (_colourRef!=null) val = val ^ _colourRef.hashCode();
     if (_position!=null) val = val ^ _position.hashCode();
     if (_positionUpdateTime!=null) val = val ^ _positionUpdateTime.hashCode();
     if (_points!=null) val = val ^ _points.hashCode();
@@ -395,6 +416,13 @@ public class Player
 	str.append("gameID=");
 	if (_gameID!=null) {
 	    str.append(_gameID.toString());
+	} else {
+	    str.append("null");
+	}
+    str.append(",");
+	str.append("colourRef=");
+	if (_colourRef!=null) {
+	    str.append(_colourRef.toString());
 	} else {
 	    str.append("null");
 	}

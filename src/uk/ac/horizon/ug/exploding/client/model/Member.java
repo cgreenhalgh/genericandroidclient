@@ -1,22 +1,4 @@
-/**
- * Copyright 2010 The University of Nottingham
- * 
- * This file is part of GenericAndroidClient.
- *
- *  GenericAndroidClient is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  GenericAndroidClient is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public License
- *  along with GenericAndroidClient.  If not, see <http://www.gnu.org/licenses/>.
- * 
- */
+
 package uk.ac.horizon.ug.exploding.client.model;
 /** 
  * Identity element is ID.
@@ -191,6 +173,108 @@ public class Member //implements uk.ac.horizon.ug.exploding.db.StatsModifier
    */
   public void unsetParentMemberID()  {
     this._parentMemberID = null; 
+  }
+
+  /** internal value - 
+   */
+  protected java.lang.String _name;
+  
+  /** getter - 
+   */
+  public java.lang.String getName()
+  {
+  
+    return _name;
+    
+  }
+
+  /** setter - 
+   */
+  public void setName(java.lang.String name)
+  {
+  
+    this._name = name;
+    
+  }
+
+  /** is set?
+   */
+  public boolean isSetName() {
+    return this._name != null; 
+  }
+
+  /** unset
+   */
+  public void unsetName()  {
+    this._name = null; 
+  }
+
+  /** internal value - 
+   */
+  protected java.lang.String _limbData;
+  
+  /** getter - 
+   */
+  public java.lang.String getLimbData()
+  {
+  
+    return _limbData;
+    
+  }
+
+  /** setter - 
+   */
+  public void setLimbData(java.lang.String limbData)
+  {
+  
+    this._limbData = limbData;
+    
+  }
+
+  /** is set?
+   */
+  public boolean isSetLimbData() {
+    return this._limbData != null; 
+  }
+
+  /** unset
+   */
+  public void unsetLimbData()  {
+    this._limbData = null; 
+  }
+
+  /** internal value - 
+   */
+  protected java.lang.Integer _colourRef;
+  
+  /** getter - 
+   */
+  public java.lang.Integer getColourRef()
+  {
+  
+    return _colourRef;
+    
+  }
+
+  /** setter - 
+   */
+  public void setColourRef(java.lang.Integer colourRef)
+  {
+  
+    this._colourRef = colourRef;
+    
+  }
+
+  /** is set?
+   */
+  public boolean isSetColourRef() {
+    return this._colourRef != null; 
+  }
+
+  /** unset
+   */
+  public void unsetColourRef()  {
+    this._colourRef = null; 
   }
 
   /** internal value - 
@@ -837,6 +921,18 @@ public class Member //implements uk.ac.horizon.ug.exploding.db.StatsModifier
         (_parentMemberID==null || oo._parentMemberID==null ||
          !_parentMemberID.equals(oo._parentMemberID)))
       return false;
+    if (_name!=oo._name &&
+        (_name==null || oo._name==null ||
+         !_name.equals(oo._name)))
+      return false;
+    if (_limbData!=oo._limbData &&
+        (_limbData==null || oo._limbData==null ||
+         !_limbData.equals(oo._limbData)))
+      return false;
+    if (_colourRef!=oo._colourRef &&
+        (_colourRef==null || oo._colourRef==null ||
+         !_colourRef.equals(oo._colourRef)))
+      return false;
     if (_zone!=oo._zone &&
         (_zone==null || oo._zone==null ||
          !_zone.equals(oo._zone)))
@@ -927,6 +1023,9 @@ public class Member //implements uk.ac.horizon.ug.exploding.db.StatsModifier
     if (_playerID!=null) val = val ^ _playerID.hashCode();
     if (_gameID!=null) val = val ^ _gameID.hashCode();
     if (_parentMemberID!=null) val = val ^ _parentMemberID.hashCode();
+    if (_name!=null) val = val ^ _name.hashCode();
+    if (_limbData!=null) val = val ^ _limbData.hashCode();
+    if (_colourRef!=null) val = val ^ _colourRef.hashCode();
     if (_zone!=null) val = val ^ _zone.hashCode();
     if (_position!=null) val = val ^ _position.hashCode();
     if (_health!=null) val = val ^ _health.hashCode();
@@ -987,6 +1086,27 @@ public class Member //implements uk.ac.horizon.ug.exploding.db.StatsModifier
 	str.append("parentMemberID=");
 	if (_parentMemberID!=null) {
 	    str.append(_parentMemberID.toString());
+	} else {
+	    str.append("null");
+	}
+    str.append(",");
+	str.append("name=");
+	if (_name!=null) {
+	    str.append(_name.toString());
+	} else {
+	    str.append("null");
+	}
+    str.append(",");
+	str.append("limbData=");
+	if (_limbData!=null) {
+	    str.append(_limbData.toString());
+	} else {
+	    str.append("null");
+	}
+    str.append(",");
+	str.append("colourRef=");
+	if (_colourRef!=null) {
+	    str.append(_colourRef.toString());
 	} else {
 	    str.append("null");
 	}
