@@ -19,9 +19,14 @@
  */
 package uk.ac.horizon.ug.exploding.client;
 
+import uk.ac.horizon.ug.exploding.client.Client.QueuedMessage;
 import uk.ac.horizon.ug.exploding.client.model.Member;
 import uk.ac.horizon.ug.exploding.client.model.Position;
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -35,7 +40,7 @@ import android.widget.Toast;
  * @author cmg
  *
  */
-public class CreateMemberActivity extends Activity {
+public class CreateMemberActivity extends Activity implements ClientMessageListener {
 
 	private static final String TAG = "CreateMember";
 
@@ -54,6 +59,28 @@ public class CreateMemberActivity extends Activity {
 			return true;
 		}
 		return super.onContextItemSelected(item);
+	}
+	private static enum DialogId {
+		CREATING_MEMBER
+	}
+	private Client cache;
+	private QueuedMessage createMemberMessage;
+	@Override
+	protected Dialog onCreateDialog(int id) {
+		if (id==DialogId.CREATING_MEMBER.ordinal()) {
+			ProgressDialog creatingPd = new ProgressDialog(this);
+			creatingPd.setCancelable(true);
+			creatingPd.setMessage("Creating member...");
+			creatingPd.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					if (cache!=null && createMemberMessage!=null)
+						cache.cancelMessage(createMemberMessage, true);
+				}
+			});
+			return creatingPd;
+		}
+		return super.onCreateDialog(id);
 	}
 
 	/**
@@ -80,13 +107,15 @@ public class CreateMemberActivity extends Activity {
 			// member zone is int?
 			//member.setZone(clientState.getZoneID());
 			member.setZone(0);
-			Client cache = clientState.getCache();
+			cache = clientState.getCache();
 			
-			// Note: this is a blocking action - should probably be moved??
-			cache.sendMessage(cache.addFactMessage(member));
-			Log.i(TAG,"Created member: "+member);
+			// Note: this is (now) an async action
+			// TODO show progress dialog?!
+			// TODO allow cancel???
+			createMemberMessage = cache.queueMessage(cache.addFactMessage(member), this);
+			Log.i(TAG,"Creating member: "+member);
 			
-			this.finish();
+			showDialog(DialogId.CREATING_MEMBER.ordinal());
 		} 
 		catch (Exception e) {
 			Toast.makeText(this, "Sorry: "+e, Toast.LENGTH_LONG).show();
@@ -99,6 +128,21 @@ public class CreateMemberActivity extends Activity {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.create_member);
+	}
+
+	@Override
+	public void onMessageResponse(MessageStatusType status,
+			String errorMessage, Object value) {
+		Log.d(TAG,"onMessageResponse: status="+status+", error="+errorMessage+", value="+value);
+		dismissDialog(DialogId.CREATING_MEMBER.ordinal());
+
+		if (status==MessageStatusType.OK)
+			this.finish();
+		else
+			Toast.makeText(this, "Sorry: "+errorMessage, Toast.LENGTH_LONG);
+		// tidy up
+		createMemberMessage = null;
+		cache = null;
 	}
 
 }

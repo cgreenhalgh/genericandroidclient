@@ -38,7 +38,10 @@ public enum MessageType {
 	DEL_FACT(true, false), // request to delete fact
 	ERROR(false, true), // error response, e.g. to add/update/delete request
 	SUBS_EN(true, false), // enable a subscription
-	SUBS_DIS(true, false) // disable a subscription
+	SUBS_DIS(true, false), // disable a subscription
+	
+	QUERY(true,false), // query/select request (giving template to query object)
+	QUERY_RESP(false,true) // query response (giving list of matches)
 	;
 	MessageType(boolean toServer, boolean toClient) {
 		this.toServer = toServer;

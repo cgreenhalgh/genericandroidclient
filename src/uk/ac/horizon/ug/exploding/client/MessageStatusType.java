@@ -33,5 +33,8 @@ public enum MessageStatusType {
 	TOO_LATE, // e.g. after close of session
 	SERVER_BUSY, // overload - hopefully temporary
 	REDIRECT_SERVER, // to a fail-over server?!
-	REDIRECT_LOBBY // go back to the lobby and restart...
+	REDIRECT_LOBBY, // go back to the lobby and restart...
+	CANCELLED_BEFORE_SEND, // client-side cancel - cannot have reached server
+	CANCELLED_AFTER_SEND, // client-side cancel, may or may not have reached server
+	NETWORK_ERROR, // client-side error, may or may not have reached server
 }

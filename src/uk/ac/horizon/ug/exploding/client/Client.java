@@ -20,14 +20,18 @@
 package uk.ac.horizon.ug.exploding.client;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,10 +42,13 @@ import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 
 import uk.ac.horizon.ug.exploding.client.model.Member;
@@ -60,9 +67,11 @@ import uk.ac.horizon.ug.exploding.client.model.Zone;
 //import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageStatusType;
 //import uk.ac.horizon.ug.exserver.clientapi.protocol.MessageType;
 
+import android.os.Handler;
 import android.util.Log;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.xml.CompactWriter;
 import com.thoughtworks.xstream.io.xml.DomDriver;
 
 /** Client stub
@@ -76,6 +85,25 @@ public class Client {
 	protected URI conversationUrl;
 	protected String clientId;
 	protected HttpClient httpClient;
+	/** queued message state */
+	private enum QueuedMessageStatus {
+		QUEUED, CONNECTING, SENDING, AWAITING_STATUS, AWAITING_RESPONSE, DONE
+	}
+	/** a queued message */
+	public class QueuedMessage {
+		// not public cons
+		QueuedMessage() {			
+		}
+		Message message;
+		Message response;
+		ClientMessageListener listener;
+		QueuedMessageStatus status;
+		MessageStatusType messageStatus;
+		String errorMessage;
+		volatile boolean cancelled = false;
+	}
+	/** queue of QueuedMessages */
+	private LinkedList<QueuedMessage> queuedMessages = new LinkedList<QueuedMessage>();
 	/**
 	 * @param conversationUrl
 	 * @param clientId
@@ -146,17 +174,144 @@ public class Client {
 		msg.setNewVal(newVal);
 		return msg;
 	}
-	/** internal async send */
-	public List<Message> sendMessage(Message msg) throws IOException {
-		List<Message> messages = new LinkedList<Message>();
-		messages.add(msg);
-		return sendMessages(messages);
+	/** queue message to send */
+	public QueuedMessage queueMessage(Message msg, ClientMessageListener listener) throws IOException {
+		synchronized (queuedMessages) {
+			QueuedMessage qm = new QueuedMessage();
+			qm.message = msg;
+			qm.listener = listener;
+			qm.status = QueuedMessageStatus.QUEUED;
+			queuedMessages.addLast(qm);
+			queuedMessages.notify();
+			return qm;
+		}
+	}
+	/** wait up to max delay on queued messages */
+	public void waitOnQueuedMessages(int maxMs) {
+		synchronized (queuedMessages) {
+			if (queuedMessages.isEmpty()) {
+		 		try {
+					queuedMessages.wait(maxMs);
+				}
+		 		catch (InterruptedException ie) {
+		 			Log.d(TAG,"waitOnQueuedMessages interrupted");
+		 		}
+			}
+		}
+	}
+	/** messages queued? */
+	public boolean isQueuedMessage() {
+		synchronized(queuedMessages) {
+			return !queuedMessages.isEmpty();
+		}
+	}
+	/** send message thread */
+	private Thread sendMessageThread;
+	private QueuedMessage currentMessage;
+	/** cancel single queued message.
+	 * @return true if message was known and cancelled */
+	public boolean cancelMessage(QueuedMessage qm, boolean callListeners) {
+		synchronized (queuedMessages) {
+			if (queuedMessages.contains(qm)) {
+				queuedMessages.remove(qm);
+				Log.d(TAG,"cancelMessage for queued Message");
+			} else if (qm==currentMessage){
+				Log.d(TAG,"cancelMessage for current Message");
+			}
+			else {
+				Log.d(TAG,"cancelMessage for unknown message "+qm);
+				return false;
+			}
+			if (qm.cancelled) {
+				Log.d(TAG,"cancelMessage for already-cancelled message "+qm);
+				return false;
+			}
+			qm.cancelled = true;
+			Log.d(TAG,"cancelMessage for "+qm.status+" message "+qm);
+			MessageStatusType status = MessageStatusType.OK;
+			switch(qm.status) {
+			case CONNECTING:
+				status = MessageStatusType.CANCELLED_BEFORE_SEND;
+				sendMessageThread.interrupt();
+				break;
+			case SENDING:
+			case AWAITING_RESPONSE:
+			case AWAITING_STATUS:				
+				status = MessageStatusType.CANCELLED_AFTER_SEND;
+				sendMessageThread.interrupt();
+				break;
+			case QUEUED:
+				status = MessageStatusType.CANCELLED_BEFORE_SEND;
+				break;
+			case DONE:
+				return false;
+			}
+			if (callListeners && qm.listener!=null)
+				callMessageListener(qm.listener, status, status.toString(), null);
+			return true;
+		}		
+	}
+	/** cancel all queued message. */
+	public void cancelQueuedMessages(boolean callListeners) {
+		while(true) {
+			synchronized (queuedMessages) {
+				if (queuedMessages.isEmpty())
+					return;
+				cancelMessage(queuedMessages.getFirst(), callListeners);
+			}
+		}
+	}
+	/** send queued messages */
+	public void sendQueuedMessages() {
+		while(true) {
+			synchronized (queuedMessages) {
+				if (queuedMessages.isEmpty())
+					return;
+				QueuedMessage qm = queuedMessages.removeFirst();
+				sendQueuedMessage(qm);
+			}
+		}	
+	}
+	private void sendQueuedMessage(QueuedMessage qm) {
+		List<Message> messages = sendQueuedMessageInternal(qm);
+		if (qm.status!=QueuedMessageStatus.DONE) {
+			Log.d(TAG,"sendQueuedMessage found status "+qm.status);
+			return;
+		}
+		if (qm.listener!=null) {
+			Object value = null;
+			if (qm.response!=null)
+				value = qm.response.getNewVal();
+			callMessageListener(qm.listener, qm.messageStatus, qm.errorMessage, value);
+		}
+	}
+	private void callMessageListener(final ClientMessageListener listener,
+			final MessageStatusType status, final String errorMessage, final Object value) {
+		if (listener==null)
+			return;
+		Handler handler = BackgroundThread.getHandler();
+		if (handler==null)
+			Log.e(TAG,"Cannot callMessageListener: handler=null");
+		else
+			handler.post(new Runnable() {
+				public void run() {
+					try {
+						listener.onMessageResponse(status, errorMessage, value);
+					}
+					catch (Exception e) {
+						Log.e(TAG,"Calling message listener "+listener, e);
+					}
+				}
+			});
 	}
 	/** internal async send */
-	public synchronized List<Message> sendMessages(List<Message> messages) throws IOException {
+	@SuppressWarnings("unchecked")
+	private synchronized List<Message> sendQueuedMessageInternal(QueuedMessage qm) {
+		currentMessage = qm;
+		sendMessageThread = Thread.currentThread();
 		HttpPost request  = new HttpPost(conversationUrl);
 		Log.i(TAG,"SendMessages to "+request.getURI()+", requestline="+request.getRequestLine());
-		request.setHeader("Content-Type", "application/xml");
+		request.setHeader("Content-Type", "application/xml;charset=UTF-8");
 		//HttpURLConnection conn = (HttpURLConnection) conversationUrl.openConnection();
 		XStream xs = new XStream(/*new DomDriver()*/);
 		xs.alias("list", LinkedList.class);    	
@@ -165,35 +320,133 @@ public class Client {
 		// game specific
 		ModelUtils.addAliases(xs);
 		
-		String xml = xs.toXML(messages);
-		Log.d(TAG, "Sent: "+xml);
-		request.setEntity(new StringEntity(xml));
-		HttpResponse reply = httpClient.execute(request);
+		List<Message> messages = new LinkedList<Message>();
+		messages.add(qm.message);
 
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		xs.marshal(messages, new CompactWriter(new OutputStreamWriter(baos,Charset.forName("UTF-8"))));
+		byte [] bytes = baos.toByteArray();
+		Log.d(TAG, "Sent: "+bytes.length+" bytes");
+		request.setEntity(new ByteArrayEntity(bytes));
+		
+		synchronized(queuedMessages) {
+			if (qm.cancelled) {
+				currentMessage = null;
+				return null;
+			}
+			qm.status = QueuedMessageStatus.SENDING;
+		}
+		
+		HttpResponse reply = null;
+		try {
+			reply = httpClient.execute(request);
+		}
+		catch (Exception e) {
+			Log.e(TAG,"Doing http request", e);
+			synchronized(queuedMessages) {
+				currentMessage = null;
+				if (qm.cancelled) 
+					return null;
+				synchronized (qm) {
+					qm.status = QueuedMessageStatus.DONE;
+					qm.messageStatus = MessageStatusType.NETWORK_ERROR;
+					qm.errorMessage = "Error sending request: "+e.getMessage();
+				}
+				return null;
+			}		
+		}
+
+		synchronized(queuedMessages) {
+			if (qm.cancelled) {
+				currentMessage = null;
+				return null;
+			}
+			qm.status = QueuedMessageStatus.AWAITING_STATUS;
+		}
+		
 		StatusLine statusLine = reply.getStatusLine();
 		Log.d(TAG, "Http status on login: "+statusLine);
 		int status = statusLine.getStatusCode();
 		if (status!=200) {
 			if (reply.getEntity()!=null)
-				reply.getEntity().consumeContent();
-			throw new IOException("Error response ("+status+") from server: "+statusLine.getReasonPhrase());
-		}
-		BufferedInputStream in = new BufferedInputStream(reply.getEntity().getContent());
-		Log.d(TAG,"Reading HTTP response -> XML");
-		messages = (List<Message>)xs.fromXML(in);
-		reply.getEntity().consumeContent();
+				try {
+					reply.getEntity().consumeContent();
+				} catch (IOException e) {
+					Log.d(TAG,"Ignored exception on "+status+" response: "+e);
+				}
 
-		Log.i(TAG, "Response "+messages.size()+" messages: "+messages);
-
-		// check status(es)
-		for (Message response : messages) {
-			if (response.getType().equals(MessageType.ERROR.name())) {
-				throw new IOException("Error response "+response.getStatus()+": "+response.getErrorMsg()+" for request "+response.getAckSeq());
+			synchronized(queuedMessages) {
+				currentMessage = null;
+				if (qm.cancelled)
+					return null;
+				synchronized (qm) {
+					qm.status = QueuedMessageStatus.DONE;
+					if (status==HttpStatus.SC_NOT_FOUND)
+						qm.messageStatus = MessageStatusType.NOT_FOUND;
+					else if (status==HttpStatus.SC_INTERNAL_SERVER_ERROR)
+						qm.messageStatus = MessageStatusType.INTERNAL_ERROR;
+					else if (status==HttpStatus.SC_BAD_REQUEST)
+						qm.messageStatus = MessageStatusType.INVALID_REQUEST;
+					else if (status==HttpStatus.SC_FORBIDDEN)
+						qm.messageStatus = MessageStatusType.NOT_PERMITTED;
+					else
+						qm.messageStatus = MessageStatusType.INTERNAL_ERROR;
+					qm.errorMessage = "Error response ("+status+") from server: "+statusLine.getReasonPhrase();
+				}
+				return null;
 			}
 		}
+		try {
+			BufferedInputStream in = new BufferedInputStream(reply.getEntity().getContent());
+			Log.d(TAG,"Reading HTTP response -> XML");
+			messages = (List<Message>)xs.fromXML(new InputStreamReader(in, Charset.forName("UTF-8")));
+			reply.getEntity().consumeContent();
+		}
+		catch (Exception e) {
+			Log.e(TAG,"Reading response", e);
+			synchronized(queuedMessages) {
+				currentMessage = null;
+				if (qm.cancelled)
+					return null;
+				synchronized (qm) {
+					qm.status = QueuedMessageStatus.DONE;
+					qm.messageStatus = MessageStatusType.NETWORK_ERROR;
+					qm.errorMessage = "Error reading response: "+e.getMessage();
+				}
+				return null;
+			}
+		}
+		Log.i(TAG, "Response "+messages.size()+" messages: "+messages);
 
+		synchronized(queuedMessages) {
+			currentMessage = null;
+			if (qm.cancelled)
+				return null;
+			synchronized (qm) {
+				qm.status = QueuedMessageStatus.DONE;
+				qm.errorMessage = null;
+				qm.messageStatus = MessageStatusType.OK;
+				// check status(es)
+				for (Message response : messages) {
+					if (response.getType().equals(MessageType.ERROR.name())) {
+						qm.messageStatus = MessageStatusType.valueOf(response.getStatus());
+						qm.errorMessage = response.getErrorMsg();
+						break;
+					}
+				}
+				if (!messages.isEmpty())
+					qm.response = messages.get(0);
+			}
+		}
+		if (Thread.interrupted()) 
+			Log.d(TAG,"Client message Thread was intterupted");
+		
 		return messages;
 	}
+	
+//
+//		return messages;
+//	}
 	/** class name -> id -> fact */
 	protected HashMap<String,HashMap<Object,Object>> facts = new HashMap<String,HashMap<Object,Object>> ();
 	/** lock facts before using is a good idea */
@@ -220,7 +473,9 @@ public class Client {
 		//msg.setToFollow(0);
 		msg.setAckSeq(ackSeq);
 		
-		List<Message> messages = sendMessage(msg);
+		QueuedMessage qm = new QueuedMessage();
+		qm.message = msg;
+		List<Message> messages = sendQueuedMessageInternal(qm);
 		if (messages==null)
 			return messages;
 		Set<String> changedTypes = new HashSet<String>();

@@ -73,8 +73,11 @@ public class BackgroundThread implements Runnable {
 	private BackgroundThread() {
 		super();
 	}
-	public static void setHandler(Handler h) {
+	public static synchronized void setHandler(Handler h) {
 		handler = h;
+	}
+	static synchronized Handler getHandler() {
+		return handler;
 	}
 	/** singleton */
 	private static Thread singleton;
@@ -85,7 +88,7 @@ public class BackgroundThread implements Runnable {
 		mainloop:
 		while (Thread.currentThread()==singleton) {
 			try {
-				boolean doLogin = false, doGetState = false, doPoll = false;
+				boolean doLogin = false, doGetState = false, doPoll = false, doSendQueuedMessages = false;
 				ClientState clientStateEvent = null;
 				synchronized (BackgroundThread.class) {
 					// recheck in sync block
@@ -112,6 +115,7 @@ public class BackgroundThread implements Runnable {
 					case POLLING:
 					case IDLE:
 					case ERROR_AFTER_STATE: {
+						doSendQueuedMessages = true;
 						int pollInterval = POLL_INTERVAL_MS;
 						SharedPreferences preferences = getSharedPreferences();
 						if (preferences!=null) {
@@ -140,8 +144,20 @@ public class BackgroundThread implements Runnable {
 					lastPollTime = System.currentTimeMillis();
 					doPoll();
 				}
-				else
-					Thread.sleep(THREAD_SLEEP_MS);
+				else if (doSendQueuedMessages) {
+					client.waitOnQueuedMessages((int)THREAD_SLEEP_MS);
+					doSendQueuedMessages();
+				}
+				else {
+					try {
+						synchronized(Thread.currentThread()) {
+							Thread.currentThread().wait(THREAD_SLEEP_MS);
+						}
+					}
+					catch (InterruptedException ie) {
+						Log.d(TAG,"BackgroundThread interrtuped");
+					}
+				}
 			}
 			catch (Exception e) {
 				Log.e(TAG, "Exception in background thread "+Thread.currentThread(), e);
@@ -300,6 +316,7 @@ public class BackgroundThread implements Runnable {
 		}
 		try {
 			updatePlayer();
+			client.sendQueuedMessages();
 			client.poll();
 			lastPollTime = System.currentTimeMillis();
 			// success = good
@@ -315,6 +332,7 @@ public class BackgroundThread implements Runnable {
 		try {
 			setClientStatus(ClientStatus.POLLING, "Trying to get updates");	
 			updatePlayer();
+			client.sendQueuedMessages();
 			client.poll();
 			// success = good
 			setClientStatus(ClientStatus.IDLE, "Ready to play");			
@@ -343,7 +361,25 @@ public class BackgroundThread implements Runnable {
 			player.setPosition(pos);
 		}
 		// relying on this being handled as a special case - no old value, no ID!
-		client.sendMessage(client.updateFactMessage(null, player));
+		client.queueMessage(client.updateFactMessage(null, player), null);
+	}
+	private void doSendQueuedMessages() {
+		// TODO Auto-generated method stub
+		try {
+			if (client.isQueuedMessage())
+			{
+				setClientStatus(ClientStatus.POLLING, "Trying to send queued updates");	
+				client.sendQueuedMessages();
+				// success = good
+				setClientStatus(ClientStatus.IDLE, "Ready to play");			
+			}
+		}
+		catch (Exception e) {
+			Log.e(TAG, "Sending queued messages", e);
+			setClientStatus(ClientStatus.ERROR_AFTER_STATE, "Could not send updates\n("+e.getMessage()+")");
+			return;						
+		}
+		
 	}
 	/** listener info */
 	private static class ListenerInfo {
@@ -564,8 +600,10 @@ public class BackgroundThread implements Runnable {
 		checkThread(context);
 		Log.i(TAG, "Shutdown client - explicit request (state "+currentClientState.getClientStatus());
 		Log.i(TAG, "Cancel from "+currentClientState.getClientStatus()+" to CANCELLED_BY_USER");
-		if (singleton!=null && singleton.isAlive())
+		if (singleton!=null && singleton.isAlive()) {
 			singleton.interrupt();
+			singleton = null;
+		}
 		currentClientState.setLoginMessage("Stopped by user");
 		currentClientState.setClientStatus(ClientStatus.CANCELLED_BY_USER);
 		fireClientStateChanged(currentClientState.clone());
