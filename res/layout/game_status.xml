@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent">
+<ScrollView android:layout_width="fill_parent" android:layout_height="fill_parent">
+<LinearLayout android:layout_width="fill_parent" android:layout_height="fill_parent" android:orientation="vertical">
+
+<TextView android:text="Game ID" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:id="@+id/game_status_id_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="Game Name" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:id="@+id/game_status_name_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="Game State" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:id="@+id/game_status_state_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="Game Year" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:id="@+id/game_status_year_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="Game Zones" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:id="@+id/game_status_zones_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+</LinearLayout>
+
+</ScrollView>
+</LinearLayout>

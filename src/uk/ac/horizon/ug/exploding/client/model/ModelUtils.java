@@ -32,5 +32,6 @@ public class ModelUtils {
 		xs.alias("player", Player.class);
 		xs.alias("member", Member.class);
 		xs.alias("msg", Message.class);
+		xs.alias("game", Game.class);
 	}
 }

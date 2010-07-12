@@ -350,7 +350,7 @@ public class Client {
 				synchronized (qm) {
 					qm.status = QueuedMessageStatus.DONE;
 					qm.messageStatus = MessageStatusType.NETWORK_ERROR;
-					qm.errorMessage = "Error sending request: "+e.getMessage();
+					qm.errorMessage = "Error sending request: "+e.getMessage()+", URL="+request.getURI();
 				}
 				return null;
 			}		
@@ -365,7 +365,7 @@ public class Client {
 		}
 		
 		StatusLine statusLine = reply.getStatusLine();
-		Log.d(TAG, "Http status on login: "+statusLine);
+		Log.d(TAG, "Http status: "+statusLine);
 		int status = statusLine.getStatusCode();
 		if (status!=200) {
 			if (reply.getEntity()!=null)
@@ -391,7 +391,7 @@ public class Client {
 						qm.messageStatus = MessageStatusType.NOT_PERMITTED;
 					else
 						qm.messageStatus = MessageStatusType.INTERNAL_ERROR;
-					qm.errorMessage = "Error response ("+status+") from server: "+statusLine.getReasonPhrase();
+					qm.errorMessage = "Error response ("+status+") from server: "+statusLine.getReasonPhrase()+", URL="+request.getURI();
 				}
 				return null;
 			}
@@ -476,8 +476,11 @@ public class Client {
 		QueuedMessage qm = new QueuedMessage();
 		qm.message = msg;
 		List<Message> messages = sendQueuedMessageInternal(qm);
-		if (messages==null)
+		if (messages==null) {
+			if (qm.messageStatus!=MessageStatusType.OK)
+				throw new IOException(qm.errorMessage!=null ? qm.errorMessage : qm.messageStatus.toString());
 			return messages;
+		}
 		Set<String> changedTypes = new HashSet<String>();
 		synchronized (facts) {
 			for (Message message : messages) {

@@ -32,6 +32,7 @@ import android.util.Log;
  */
 public class GUIDFactory {
 	private static final String TAG = "GUIDFactory";
+	private static final int MAX_LENGTH = 10;
 	private static MessageDigest md;
 	private static boolean inited = false;
 	private static long count = 0;
@@ -51,7 +52,7 @@ public class GUIDFactory {
 			md.update(getBytes(time, bytes));
 			byte dig[] = md.digest(getBytes(count++, bytes));
 			StringBuilder sb = new StringBuilder();
-			for (int i=0; i<dig.length; i++) {
+			for (int i=0; i<dig.length && i<MAX_LENGTH/2; i++) {
 				int nibble = (dig[i] >> 4) & 0xf;
 				sb.append(nibble>=10 ? (char)('a'+nibble-10) : (char)('0'+nibble));
 				nibble = (dig[i] ) & 0xf;

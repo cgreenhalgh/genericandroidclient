@@ -1,22 +1,4 @@
-/**
- * Copyright 2010 The University of Nottingham
- * 
- * This file is part of GenericAndroidClient.
- *
- *  GenericAndroidClient is free software: you can redistribute it and/or modify
- *  it under the terms of the GNU Affero General Public License as published by
- *  the Free Software Foundation, either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  GenericAndroidClient is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Affero General Public License for more details.
- *
- *  You should have received a copy of the GNU Affero General Public License
- *  along with GenericAndroidClient.  If not, see <http://www.gnu.org/licenses/>.
- * 
- */
+
 package uk.ac.horizon.ug.exploding.client.model;
 /** 
  * Identity element is ID.
@@ -25,6 +7,20 @@ package uk.ac.horizon.ug.exploding.client.model;
 public class Message
 {
 
+  /** constants */
+
+  /** constant -  */
+  public static final java.lang.String MSG_MEMBER_CREATED = "member_created";
+  /** constant -  */
+  public static final java.lang.String MSG_MEMBER_ASSIMILATED = "member_assimilated";
+  /** constant -  */
+  public static final java.lang.String MSG_MEMBER_ASSIMILATED_OTHER = "member_assimilated_other";
+  /** constant -  */
+  public static final java.lang.String MSG_MEMBER_DIED = "member_died";
+  /** constant -  */
+  public static final java.lang.String MSG_TIMELINE_YEAR = "timeline_year";
+  /** constant -  */
+  public static final java.lang.String MSG_TIMELINE_CONTENT = "timeline_content";
   /** no-arg cons */
   public Message()
   {

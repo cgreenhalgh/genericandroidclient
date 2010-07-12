@@ -6,4 +6,5 @@
 <item android:id="@+id/main_menu_preferences" android:title="@string/main_menu_preferences" android:visible="true" android:enabled="true" android:titleCondensed="@string/main_menu_preferences_short"></item>
 <item android:id="@+id/main_menu_gps" android:titleCondensed="GPS" android:menuCategory="secondary" android:title="GPS Status" android:icon="@drawable/gps"></item>
 <item android:id="@+id/main_menu_player_status" android:title="Player Status" android:menuCategory="secondary" android:titleCondensed="Player"></item>
+<item android:titleCondensed="Game" android:title="Game Status" android:id="@+id/main_menu_game_status"></item>
 </menu>

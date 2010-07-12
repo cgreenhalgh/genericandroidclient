@@ -113,6 +113,13 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			startActivity(intent);
 			return true;
 		}			
+		case R.id.main_menu_game_status:
+		{
+			Intent intent = new Intent();
+			intent.setClass(this, GameStatusActivity.class);
+			startActivity(intent);
+			return true;
+		}			
 		default:
 			return super.onOptionsItemSelected(item);			
 		}
