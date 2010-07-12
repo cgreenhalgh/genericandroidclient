@@ -32,7 +32,7 @@ import android.util.Log;
  */
 public class GUIDFactory {
 	private static final String TAG = "GUIDFactory";
-	private static final int MAX_LENGTH = 10;
+	private static final int MAX_LENGTH = 20;
 	private static MessageDigest md;
 	private static boolean inited = false;
 	private static long count = 0;

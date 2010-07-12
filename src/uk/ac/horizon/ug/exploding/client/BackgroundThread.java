@@ -441,12 +441,14 @@ public class BackgroundThread implements Runnable {
 	}
 	/** set location and zone and fire; Note called by Location thread via ZoneService, not
 	 * current client/background thread. */
-	static synchronized void setLocation(Location location, String zoneID) {
+	static synchronized void setLocation(Location location, String zoneID, int zoneOrgID) {
 		if (currentClientState!=null) {
 			currentClientState.setLastLocation(location);
 			// either could be null!
 			if (zoneID!=currentClientState.getZoneID() && (zoneID==null || currentClientState.getZoneID()==null || !zoneID.equals(currentClientState.getZoneID())))
 				currentClientState.setZoneID(zoneID);
+			if (zoneOrgID!=currentClientState.getZoneOrgID())
+				currentClientState.setZoneOrgID(zoneOrgID);
 			ClientState clone = currentClientState.clone();
 			Log.d(TAG,"setLocation("+zoneID+") - current="+currentClientState.getZoneID()+"/"+currentClientState.isZoneChanged()+", clone="+clone.getZoneID()+"/"+clone.isZoneChanged());
 			fireClientStateChanged(clone);

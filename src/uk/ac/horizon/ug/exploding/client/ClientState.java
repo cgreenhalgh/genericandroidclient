@@ -47,6 +47,8 @@ public class ClientState {
 	private boolean locationChanged;
 	/** current zone */
 	private String zoneID;
+	/** current zone OrgId */
+	private int zoneOrgID;
 	/** zone changed */
 	private boolean zoneChanged;
 	/** listener flags */
@@ -66,10 +68,25 @@ public class ClientState {
 	public ClientState() {		
 	}
 	
+	/**
+	 * @param clientStatus
+	 * @param gameStatus
+	 * @param loginStatus
+	 * @param loginMessage
+	 * @param statusChanged
+	 * @param lastLocation
+	 * @param locationChanged
+	 * @param zoneID
+	 * @param zoneOrgID
+	 * @param zoneChanged
+	 * @param cache
+	 * @param changedTypes
+	 */
 	public ClientState(ClientStatus clientStatus, GameStatus gameStatus,
 			Status loginStatus, String loginMessage, boolean statusChanged,
 			Location lastLocation, boolean locationChanged, String zoneID,
-			boolean zoneChanged, Client cache, Set<String> changedTypes) {
+			int zoneOrgID, boolean zoneChanged, Client cache,
+			Set<String> changedTypes) {
 		super();
 		this.clientStatus = clientStatus;
 		this.gameStatus = gameStatus;
@@ -79,8 +96,10 @@ public class ClientState {
 		this.lastLocation = lastLocation;
 		this.locationChanged = locationChanged;
 		this.zoneID = zoneID;
+		this.zoneOrgID = zoneOrgID;
 		this.zoneChanged = zoneChanged;
 		this.cache = cache;
+		this.changedTypes = changedTypes;
 		// copy
 		this.changedTypes.addAll(changedTypes);
 	}
@@ -189,7 +208,7 @@ public class ClientState {
 	}
 
 	public ClientState clone() {
-		ClientState copy = new ClientState(clientStatus, gameStatus, loginStatus, loginMessage, statusChanged, lastLocation, locationChanged,zoneID, zoneChanged, cache, changedTypes);
+		ClientState copy = new ClientState(clientStatus, gameStatus, loginStatus, loginMessage, statusChanged, lastLocation, locationChanged,zoneID, zoneOrgID, zoneChanged, cache, changedTypes);
 		statusChanged = false;
 		locationChanged = false;
 		zoneChanged = false;
@@ -197,6 +216,24 @@ public class ClientState {
 		return copy;
 	}
 
+	/**
+	 * @return the zoneOrgID
+	 */
+	public int getZoneOrgID() {
+		return zoneOrgID;
+	}
+
+	/**
+	 * @param zoneOrgID the zoneOrgID to set
+	 */
+	public void setZoneOrgID(int zoneOrgID) {
+		this.zoneOrgID = zoneOrgID;
+		zoneChanged = true;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		return "ClientState [cache=" + cache + ", changedTypes=" + changedTypes
@@ -205,7 +242,8 @@ public class ClientState {
 				+ ", locationChanged=" + locationChanged + ", loginMessage="
 				+ loginMessage + ", loginStatus=" + loginStatus
 				+ ", statusChanged=" + statusChanged + ", zoneChanged="
-				+ zoneChanged + ", zoneID=" + zoneID + "]";
+				+ zoneChanged + ", zoneID=" + zoneID + ", zoneOrgID="
+				+ zoneOrgID + "]";
 	}
 	
 }

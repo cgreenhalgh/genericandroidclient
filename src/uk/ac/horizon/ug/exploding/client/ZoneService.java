@@ -42,12 +42,12 @@ public class ZoneService {
 			return;
 		double latitude = loc.getLatitude();
 		double longitude = loc.getLongitude();
-		String zone = getZone(context, latitude, longitude);
-		Log.d(TAG, "UpdateLocation to "+latitude+","+longitude+", zone="+zone);
-		BackgroundThread.setLocation(loc, zone);
+		Zone zone = getZone(context, latitude, longitude);
+		Log.d(TAG, "UpdateLocation to "+latitude+","+longitude+", zone="+zone+" ("+(zone!=null ? zone.getName() : "null")+", "+(zone!=null && zone.isSetOrgId() ? zone.getOrgId() : 0));
+		BackgroundThread.setLocation(loc, zone!=null ? zone.getName() : null, zone!=null && zone.isSetOrgId() ? zone.getOrgId() : 0);
 	}
 	
-	static public String getZone(Context context, double latitude, double longitude){
+	static public Zone getZone(Context context, double latitude, double longitude){
 		ClientState clientState = BackgroundThread.getClientState(context);
 		if (clientState==null || clientState.getCache()==null) 
 			return null;
@@ -57,7 +57,7 @@ public class ZoneService {
     		Zone zone = (Zone)z;
     		Position ps [] = zone.getCoordinates();
     		if (polygonContains(ps, latitude, longitude)){
-    			return zone.getName();
+    			return zone;
     		}
 		}
     	return null; 

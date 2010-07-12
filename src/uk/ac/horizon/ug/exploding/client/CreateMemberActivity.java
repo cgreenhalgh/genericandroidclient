@@ -104,14 +104,10 @@ public class CreateMemberActivity extends Activity implements ClientMessageListe
 			pos.setLongitude(loc.getLongitude());
 			pos.setElevation(loc.getAltitude());
 			member.setPosition(pos);
-			// member zone is int?
-			//member.setZone(clientState.getZoneID());
-			member.setZone(0);
+			member.setZone(clientState.getZoneOrgID());
 			cache = clientState.getCache();
 			
 			// Note: this is (now) an async action
-			// TODO show progress dialog?!
-			// TODO allow cancel???
 			createMemberMessage = cache.queueMessage(cache.addFactMessage(member), this);
 			Log.i(TAG,"Creating member: "+member);
 			
