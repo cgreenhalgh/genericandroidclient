@@ -12,10 +12,10 @@
 <TextView android:text="-" android:id="@+id/gps_status_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <TextView android:text="Time to first fix" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <TextView android:text="-" android:id="@+id/gps_time_to_fix_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
-<TextView android:text="Last Loc. Time" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
-<TextView android:text="-" android:id="@+id/gps_loc_time_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
-<TextView android:text="Time" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="Last Update Time" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <TextView android:text="-" android:id="@+id/gps_time_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="Last Location's Timestamp" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<TextView android:text="-" android:id="@+id/gps_loc_time_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <TextView android:text="Latitude" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <TextView android:text="-" android:id="@+id/gps_latitude_text_view" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <TextView android:text="Longitude" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>

@@ -98,12 +98,11 @@ public class GpsStatusActivity extends Activity implements Listener, LocationLis
 
 	@Override
 	public void onGpsStatusChanged(int event) {
-		// TODO Auto-generated method stub
 		LocationManager locationManager = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
 		GpsStatus status = locationManager.getGpsStatus(null);
 		TextView tv;
 		tv = (TextView)findViewById(R.id.gps_time_to_fix_text_view);
-		tv.setText(""+new Date(status.getTimeToFirstFix()));
+		tv.setText(""+(status.getTimeToFirstFix()/1000)+"s");
 		int satCount = 0, satFixCount = 0;
 		double snrs[] = new double[status.getMaxSatellites()];
 		int i =0;
