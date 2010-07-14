@@ -12,20 +12,22 @@
             </intent-filter>
         </activity>
 
-    <activity android:allowTaskReparenting="true" android:name=".ExplodingPreferences" android:launchMode="singleTop" android:label="Preferences" android:icon="@drawable/icon"><intent-filter><action android:name="android.intent.action.MAIN"></action>
-<category android:name="android.intent.category.LAUNCHER"></category>
-</intent-filter>
+    <activity android:name=".ExplodingPreferences" android:label="Preferences" android:icon="@drawable/icon" android:allowTaskReparenting="false" android:launchMode="standard">
 </activity>
-<activity android:icon="@drawable/gps" android:name=".GpsStatusActivity" android:label="Gps Status" android:allowTaskReparenting="true" android:clearTaskOnLaunch="true" android:noHistory="true" android:enabled="true" android:exported="true" android:launchMode="standard"><intent-filter android:label="Gps Status">
+<activity android:icon="@drawable/gps" android:name=".GpsStatusActivity" android:label="Gps Status" android:clearTaskOnLaunch="true" android:noHistory="true" android:enabled="true" android:exported="true" android:allowTaskReparenting="false" android:launchMode="singleTop"><intent-filter android:label="Gps Status">
 <action android:name="android.intent.action.MAIN"></action>
 <category android:name="android.intent.category.LAUNCHER"></category>
 </intent-filter>
 </activity>
 <activity android:label="Game Map" android:name=".GameMapActivity"></activity>
 <uses-library android:name="com.google.android.maps" android:required="true"></uses-library>
-<activity android:label="Player Status" android:name=".PlayerStatusActivity"></activity>
+<activity android:label="Player Status" android:name=".PlayerStatusActivity" android:taskAffinity="uk.ac.horizon.ug.exploding.client.debug" android:allowTaskReparenting="true" android:launchMode="singleTop"></activity>
 <activity android:label="Create Member" android:name=".CreateMemberActivity"></activity>
-<activity android:label="Game Status" android:name=".GameStatusActivity"></activity>
+<activity android:label="Game Status" android:name=".GameStatusActivity" android:taskAffinity="uk.ac.horizon.ug.exploding.client.debug" android:allowTaskReparenting="true" android:launchMode="singleTop"></activity>
+<activity android:name=".DebugHomeActivity" android:taskAffinity="uk.ac.horizon.ug.exploding.client.debug" android:launchMode="singleTask" android:label="Exploding Debug" android:alwaysRetainTaskState="true" android:finishOnCloseSystemDialogs="false" android:finishOnTaskLaunch="false" android:clearTaskOnLaunch="false"><intent-filter><action android:name="android.intent.action.MAIN"></action>
+<category android:name="android.intent.category.LAUNCHER"></category>
+</intent-filter>
+</activity>
 </application>
 
 

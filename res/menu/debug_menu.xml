@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu
+  xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+<item android:visible="true" android:enabled="true" android:titleCondensed="@string/main_menu_preferences_short" android:title="@string/main_menu_preferences" android:id="@+id/debug_menu_preferences"></item>
+<item android:titleCondensed="GPS" android:menuCategory="secondary" android:title="GPS Status" android:icon="@drawable/gps" android:id="@+id/debug_menu_gps"></item>
+<item android:title="Player Status" android:menuCategory="secondary" android:titleCondensed="Player" android:id="@+id/debug_menu_player_status"></item>
+<item android:titleCondensed="Game" android:title="Game Status" android:id="@+id/debug_menu_game_status"></item>
+</menu>

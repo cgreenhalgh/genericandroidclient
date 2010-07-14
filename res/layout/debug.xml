@@ -4,7 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
-<!-- Now in Debug <TextView  
+<TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="Server URL:"
@@ -13,7 +13,7 @@
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="..."
-    android:id="@+id/main_server_url_text_view"
+    android:id="@+id/debug_server_url_text_view"
     />
 <TextView  
     android:layout_width="fill_parent" 
@@ -24,7 +24,7 @@
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="..."
-    android:id="@+id/main_status_text_view"
+    android:id="@+id/debug_status_text_view"
     />
 <TextView  
     android:layout_width="fill_parent" 
@@ -35,7 +35,7 @@
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="..."
-    android:id="@+id/main_login_status_text_view"
+    android:id="@+id/debug_login_status_text_view"
     />
 <TextView  
     android:layout_width="fill_parent" 
@@ -46,7 +46,7 @@
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="..."
-    android:id="@+id/main_game_status_text_view"
+    android:id="@+id/debug_game_status_text_view"
     />
 <TextView  
     android:layout_width="fill_parent" 
@@ -57,7 +57,6 @@
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 
     android:text="..."
-    android:id="@+id/main_login_message_text_view"
+    android:id="@+id/debug_login_message_text_view"
     />
-  -->
 </LinearLayout>

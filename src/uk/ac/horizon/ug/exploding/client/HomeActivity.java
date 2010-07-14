@@ -91,35 +91,36 @@ public class HomeActivity extends Activity implements ClientStateListener {
 		}			
 		case R.id.main_menu_retry:
 			BackgroundThread.retry(this);
-			return true;	
-		case R.id.main_menu_preferences:
-		{
-			Intent intent = new Intent();
-			intent.setClass(this, ExplodingPreferences.class);
-			startActivity(intent);
 			return true;
-		}
-		case R.id.main_menu_gps:
-		{
-			Intent intent = new Intent();
-			intent.setClass(this, GpsStatusActivity.class);
-			startActivity(intent);
-			return true;
-		}			
-		case R.id.main_menu_player_status:
-		{
-			Intent intent = new Intent();
-			intent.setClass(this, PlayerStatusActivity.class);
-			startActivity(intent);
-			return true;
-		}			
-		case R.id.main_menu_game_status:
-		{
-			Intent intent = new Intent();
-			intent.setClass(this, GameStatusActivity.class);
-			startActivity(intent);
-			return true;
-		}			
+		// Now in Debug
+//		case R.id.main_menu_preferences:
+//		{
+//			Intent intent = new Intent();
+//			intent.setClass(this, ExplodingPreferences.class);
+//			startActivity(intent);
+//			return true;
+//		}
+//		case R.id.main_menu_gps:
+//		{
+//			Intent intent = new Intent();
+//			intent.setClass(this, GpsStatusActivity.class);
+//			startActivity(intent);
+//			return true;
+//		}			
+//		case R.id.main_menu_player_status:
+//		{
+//			Intent intent = new Intent();
+//			intent.setClass(this, PlayerStatusActivity.class);
+//			startActivity(intent);
+//			return true;
+//		}			
+//		case R.id.main_menu_game_status:
+//		{
+//			Intent intent = new Intent();
+//			intent.setClass(this, GameStatusActivity.class);
+//			startActivity(intent);
+//			return true;
+//		}			
 		default:
 			return super.onOptionsItemSelected(item);			
 		}
@@ -208,19 +209,20 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			showDialog(DialogId.GETTING_STATE.ordinal());
 		else if (gettingStatePd!=null && gettingStatePd.isShowing())
 			dismissDialog(DialogId.GETTING_STATE.ordinal());
-		
-		// update status
-		TextView statusTextView = (TextView)findViewById(R.id.main_status_text_view);
-		statusTextView.setText(clientState.getClientStatus().name());
-		// update status
-		TextView gameStatusTextView = (TextView)findViewById(R.id.main_game_status_text_view);
-		gameStatusTextView.setText(clientState.getGameStatus().name());
-		// update login status
-		TextView loginStatusTextView = (TextView)findViewById(R.id.main_login_status_text_view);
-		loginStatusTextView.setText(clientState.getLoginStatus().name());
-		// update login message
-		TextView loginMessageTextView = (TextView)findViewById(R.id.main_login_message_text_view);
-		loginMessageTextView.setText(clientState.getLoginMessage());
+
+		// Now in debug
+//		// update status
+//		TextView statusTextView = (TextView)findViewById(R.id.main_status_text_view);
+//		statusTextView.setText(clientState.getClientStatus().name());
+//		// update status
+//		TextView gameStatusTextView = (TextView)findViewById(R.id.main_game_status_text_view);
+//		gameStatusTextView.setText(clientState.getGameStatus().name());
+//		// update login status
+//		TextView loginStatusTextView = (TextView)findViewById(R.id.main_login_status_text_view);
+//		loginStatusTextView.setText(clientState.getLoginStatus().name());
+//		// update login message
+//		TextView loginMessageTextView = (TextView)findViewById(R.id.main_login_message_text_view);
+//		loginMessageTextView.setText(clientState.getLoginMessage());
 	}
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onPause()
@@ -253,7 +255,8 @@ public class HomeActivity extends Activity implements ClientStateListener {
 		ClientState clientState = BackgroundThread.getClientState(this);
 		updateDialogs(clientState);
 		Log.d(TAG, "onResume(), clientState="+clientState);
-		TextView urlTextView = (TextView)findViewById(R.id.main_server_url_text_view);
+		// now in debug
+//		TextView urlTextView = (TextView)findViewById(R.id.main_server_url_text_view);
 		// preferences edited by PreferencesActivity
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean shutdownClient = preferences.getBoolean("shutdownClient", false);
@@ -266,7 +269,8 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			BackgroundThread.restart(this);
 			preferences.edit().putBoolean("restartClient", false).commit();
 		}
-		urlTextView.setText(preferences.getString("serverUrl", "(not set)"));
+		// now in debug
+//		urlTextView.setText(preferences.getString("serverUrl", "(not set)"));
 		
 		//AudioUtils.autoResume();
 		// TEST
