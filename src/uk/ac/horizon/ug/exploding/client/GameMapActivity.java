@@ -35,12 +35,14 @@ import com.google.android.maps.MyLocationOverlay;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -163,7 +165,9 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 			//	Toast.makeText(this, "You cannot author yet - keep playing", Toast.LENGTH_LONG).show();
 			//	return true;
 			//}
-			if (player==null || !player.isSetNewMemberQuota() || player.getNewMemberQuota()<1) {
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+			boolean standaloneMode = preferences.getBoolean("standaloneMode", false);
+			if (!standaloneMode && (player==null || !player.isSetNewMemberQuota() || player.getNewMemberQuota()<1)) {
 				Toast.makeText(this, "You cannot create a member yet - keep playing", Toast.LENGTH_LONG).show();
 				return true;
 			}

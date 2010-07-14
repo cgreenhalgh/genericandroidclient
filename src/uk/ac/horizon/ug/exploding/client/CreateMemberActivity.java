@@ -97,6 +97,8 @@ public class CreateMemberActivity extends Activity implements ClientMessageListe
 			member.setWealth(Integer.parseInt(et.getText().toString()));
 			et = (EditText)findViewById(R.id.create_member_brains_edit_text);
 			member.setBrains(Integer.parseInt(et.getText().toString()));
+			et = (EditText)findViewById(R.id.create_member_name_edit_text);
+			member.setName(et.getText().toString());
 			ClientState clientState = BackgroundThread.getClientState(this);
 			Position pos = new Position();
 			Location loc = clientState.getLastLocation();
@@ -135,7 +137,7 @@ public class CreateMemberActivity extends Activity implements ClientMessageListe
 		if (status==MessageStatusType.OK)
 			this.finish();
 		else
-			Toast.makeText(this, "Sorry: "+errorMessage, Toast.LENGTH_LONG);
+			Toast.makeText(this, "Sorry: "+errorMessage, Toast.LENGTH_LONG).show();
 		// tidy up
 		createMemberMessage = null;
 		cache = null;

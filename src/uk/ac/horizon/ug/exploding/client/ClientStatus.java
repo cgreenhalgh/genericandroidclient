@@ -25,6 +25,7 @@ package uk.ac.horizon.ug.exploding.client;
  *
  */
 public enum ClientStatus {
+	CONFIGURING, // before starting 
 	NEW, // started - no activity
 	LOGGING_IN, // initial request
 	GETTING_STATE,

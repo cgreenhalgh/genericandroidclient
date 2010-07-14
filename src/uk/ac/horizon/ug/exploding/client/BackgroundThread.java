@@ -33,6 +33,7 @@ import android.location.Location;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.telephony.TelephonyManager;
+import android.text.Editable;
 import android.util.Log;
 
 import org.apache.http.HttpResponse;
@@ -97,6 +98,9 @@ public class BackgroundThread implements Runnable {
 					// Synchronized!
 					//Log.d(TAG, "Background action on state "+currentClientState);
 					switch(currentClientState.getClientStatus()) {
+					case CONFIGURING:
+						// no op
+						break;
 					case CANCELLED_BY_USER:
 					case ERROR_DOING_LOGIN:
 					case ERROR_GETTING_STATE:
@@ -251,7 +255,9 @@ public class BackgroundThread implements Runnable {
 		try {
 			LoginMessage login = new LoginMessage();
 			login.setClientId(clientId);
-			if (preferences.contains(DEFAULT_PLAYER) && preferences.getString(DEFAULT_PLAYER, "").length()>0)
+			if (playerName!=null)
+				login.setPlayerName(playerName);
+			else if (preferences.contains(DEFAULT_PLAYER) && preferences.getString(DEFAULT_PLAYER, "").length()>0)
 				login.setPlayerName(preferences.getString(DEFAULT_PLAYER, null));
 			login.setConversationId(conversationId);
 			login.setClientVersion(CLIENT_VERSION);
@@ -530,12 +536,12 @@ public class BackgroundThread implements Runnable {
 	/** check */
 	private static synchronized void checkThread(Context context) {
 		if (currentClientState==null)
-			currentClientState = new ClientState(ClientStatus.NEW, GameStatus.UNKNOWN);
-		if (singleton==null || !singleton.isAlive()) {
-			Log.i(TAG, (singleton!=null ? "(Re)": "")+"starting background thread");
-			singleton = new Thread(new BackgroundThread());
-			singleton.start();			
-		}
+			currentClientState = new ClientState(ClientStatus.CONFIGURING, GameStatus.UNKNOWN);
+//		if (singleton==null || !singleton.isAlive()) {
+//			Log.i(TAG, (singleton!=null ? "(Re)": "")+"starting background thread");
+//			singleton = new Thread(new BackgroundThread());
+//			singleton.start();			
+//		}
 		if (contextRef==null || contextRef.get()==null) {
 			contextRef = new WeakReference<Context>(context);
 //			PreferenceManager.getDefaultSharedPreferences(context).registerOnSharedPreferenceChangeListener(new SharedPreferenceChangeListener());
@@ -634,5 +640,15 @@ public class BackgroundThread implements Runnable {
 	private static void addClientStateListener(ClientStateListener listener,
 			Context context, Set<String> types) {
 		addClientStateListener(listener, context, 0, types);
+	}
+	private static String playerName;
+	/**
+	 * @param text
+	 */
+	public static void setPlayerName(String name) {
+		playerName = name;
+	}
+	public static String getPlayerName() {
+		return playerName;
 	}
 }

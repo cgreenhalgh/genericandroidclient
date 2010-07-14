@@ -7,6 +7,9 @@
 <ScrollView android:layout_width="fill_parent" android:layout_height="fill_parent">
 <LinearLayout android:layout_width="fill_parent" android:layout_height="wrap_content" android:orientation="vertical">
 
+<TextView android:text="Name:" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
+<EditText android:text="" android:id="@+id/create_member_name_edit_text" android:layout_width="fill_parent" android:layout_height="wrap_content"></EditText>
+
 <TextView android:text="Health:" android:layout_width="wrap_content" android:layout_height="wrap_content"></TextView>
 <EditText android:text="0" android:id="@+id/create_member_health_edit_text" android:layout_width="fill_parent" android:layout_height="wrap_content"></EditText>
 
