@@ -382,9 +382,13 @@ public class HomeActivity extends Activity implements ClientStateListener {
 				clientState.getClientStatus()==ClientStatus.IDLE) &&
 				clientState.getGameStatus()!=null && clientState.getGameStatus()==GameStatus.NOT_STARTED) {
 			showDialog(DialogId.WAITING_FOR_GAME.ordinal());			
-		} else if (waitingForGamePd!=null && waitingForGamePd.isShowing())
+		} else if (waitingForGamePd!=null && waitingForGamePd.isShowing()) {
 			dismissDialog(DialogId.WAITING_FOR_GAME.ordinal());				
-		
+			if (clientState.getClientStatus()==ClientStatus.PAUSED || 
+					clientState.getClientStatus()==ClientStatus.POLLING|| 
+					clientState.getClientStatus()==ClientStatus.IDLE)
+				play();
+		}
 		// Now in debug
 //		// update status
 		TextView statusTextView = (TextView)findViewById(R.id.main_status_text_view);
