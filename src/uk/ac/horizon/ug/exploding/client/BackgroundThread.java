@@ -62,7 +62,6 @@ public class BackgroundThread implements Runnable {
 	public static final String TAG = "ExplodingPlacesBackgroundThread";
 	private static final long THREAD_SLEEP_MS = 1000;
 	// in preferences.xml
-	private static final String DEFAULT_PLAYER = "defaultPlayerName";
 	public static final int CLIENT_VERSION = 1;
 	private static final String CLIENT_TYPE = "AndroidDevclient";
 	private static final String LOGIN_PATH = "login";
@@ -255,10 +254,7 @@ public class BackgroundThread implements Runnable {
 		try {
 			LoginMessage login = new LoginMessage();
 			login.setClientId(clientId);
-			if (playerName!=null)
-				login.setPlayerName(playerName);
-			else if (preferences.contains(DEFAULT_PLAYER) && preferences.getString(DEFAULT_PLAYER, "").length()>0)
-				login.setPlayerName(preferences.getString(DEFAULT_PLAYER, null));
+			login.setPlayerName(ExplodingPreferences.getPlayerName(context));
 			login.setConversationId(conversationId);
 			login.setClientVersion(CLIENT_VERSION);
 			login.setClientType(CLIENT_TYPE);
@@ -640,15 +636,5 @@ public class BackgroundThread implements Runnable {
 	private static void addClientStateListener(ClientStateListener listener,
 			Context context, Set<String> types) {
 		addClientStateListener(listener, context, 0, types);
-	}
-	private static String playerName;
-	/**
-	 * @param text
-	 */
-	public static void setPlayerName(String name) {
-		playerName = name;
-	}
-	public static String getPlayerName() {
-		return playerName;
 	}
 }

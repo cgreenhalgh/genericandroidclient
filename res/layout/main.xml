@@ -4,6 +4,9 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     >
+    
+<Button android:id="@+id/main_start_button" android:text="Start" android:layout_width="fill_parent" android:layout_height="wrap_content">
+</Button>
 <!-- Now in Debug <TextView  
     android:layout_width="fill_parent" 
     android:layout_height="wrap_content" 

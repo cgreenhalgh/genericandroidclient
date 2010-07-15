@@ -64,4 +64,10 @@ public class ExplodingPreferences extends PreferenceActivity {
 		}
 		return preferences.getString(CLIENT_ID, null);
 	}
+	public static final String PLAYER_NAME = "playerName";
+	/** get device id */
+	public static String getPlayerName(Context context) {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+		return preferences.getString(PLAYER_NAME, "");
+	}
 }

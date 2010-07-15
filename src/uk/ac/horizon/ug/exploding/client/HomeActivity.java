@@ -49,6 +49,14 @@ import android.widget.Toast;
  * Note: should be singleTask in manifest, i.e. only one should ever exist as task root.
  * Also manages background thread shared by other Activities. 
  * 
+ * The State space for this is a bit gnarly. It is affected by: client state 
+ * (updated by BackgroundThread), game state (ditto), android activity life-cycle and
+ * direct user interaction (with dialogs and menus/buttons).
+ * 
+ * The main visual states are:
+ * - show only view ("Start" button enabled to restart)
+ * - show "Start new 
+ * 
  * @author cmg
  *
  */
@@ -60,8 +68,15 @@ public class HomeActivity extends Activity implements ClientStateListener {
         super.onCreate(savedInstanceState);
         BackgroundThread.setHandler(handler);
         setContentView(R.layout.main);
+        Button start_button = (Button)findViewById(R.id.main_start_button);
+        start_button.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				doRetry();
+			}
+		});
         BackgroundThread.addClientStateListener(this, this, ClientState.Part.STATUS.flag());
-        showPlayerNameDialog = true;
+        startedFromHome = true;
         //AudioUtils.addSoundFile(this, R.raw.buzzing, new SoundAttributes(1.0f, 1.0f, true, 1.0f));
         //AudioUtils.play(R.raw.buzzing);
     }
@@ -72,7 +87,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
     			intent.getCategories().contains(Intent.CATEGORY_LAUNCHER) && 
     			(intent.getFlags() & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)==0) {
     		// prompt for new game on re-launch
-    		showPlayerNameDialog = true;
+    		startedFromHome = true;
     		Log.d(TAG,"onNewIntent(MAIN,LAUNCHER): "+intent);
     	}
     	else
@@ -89,7 +104,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
     }
     private boolean enableRetry = false;
     private boolean enablePlay = false;
-    private boolean playerDialogActive = false;
+    //private boolean playerDialogActive = false;
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onPrepareOptionsMenu(android.view.Menu)
 	 */
@@ -109,7 +124,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
 		startActivity(intent);
 	}
 	private void playIfReady() {
-		if (playerDialogActive==true || (connectingPd!=null && connectingPd.isShowing()) || (this.gettingStatePd!=null && gettingStatePd.isShowing())) {
+		if ((playerNameDialog!=null && playerNameDialog.isShowing()) || (connectingPd!=null && connectingPd.isShowing()) || (this.gettingStatePd!=null && gettingStatePd.isShowing())) {
 			Log.d(TAG,"Not ready to play due to dialog(s)");
 			return;
 		}
@@ -133,13 +148,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			play();
 			return true;
 		case R.id.main_menu_retry: {
-			ClientState clientState = BackgroundThread.getClientState(this);
-			if (clientState!=null && clientState.getClientStatus()==ClientStatus.CONFIGURING) {
-				showDialog(DialogId.NEW_GAME.ordinal());
-				playerDialogActive = true;
-			}
-			else
-				BackgroundThread.retry(this);
+			doRetry();
 			return true;
 		}
 		// Now in Debug
@@ -175,11 +184,23 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			return super.onOptionsItemSelected(item);			
 		}
 	}
+	/**
+	 * 
+	 */
+	private void doRetry() {
+		ClientState clientState = BackgroundThread.getClientState(this);
+		String playerName = ExplodingPreferences.getPlayerName(this);
+		if (playerName==null || playerName.length()==0)
+			showDialog(DialogId.PLAYER_NAME.ordinal());
+		else
+			BackgroundThread.retry(this);
+	}
 	private static enum DialogId {
-		CONNECTING, GETTING_STATE, NEW_GAME, PLAYER_NAME
+		CONNECTING, GETTING_STATE, /*NEW_GAME,*/ PLAYER_NAME
 	}
 	private ProgressDialog connectingPd;
 	private ProgressDialog gettingStatePd;
+	private Dialog playerNameDialog;
     /* (non-Javadoc)
 	 * @see android.app.Activity#onCreateDialog(int)
 	 */
@@ -209,56 +230,59 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			});
 			return gettingStatePd;
 		}
-		if (id==DialogId.NEW_GAME.ordinal()) {
-			AlertDialog.Builder builder = new AlertDialog.Builder(this);
-			builder.setMessage("Do you want to join a new game?")
-				.setCancelable(false)
-				.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {
-						//MyActivity.this.finish();
-						dialog.cancel();
-						showDialog(DialogId.PLAYER_NAME.ordinal());
-						playerDialogActive = true;
-					}       
-				})       
-				.setNegativeButton("No", new DialogInterface.OnClickListener() {
-					public void onClick(DialogInterface dialog, int id) {                
-						dialog.cancel();           
-						playerDialogActive = false;
-						// TODO: carry on?
-						playIfReady();
-					}     
-				});
-			return builder.create();
-		}
+		// Handle through debug/preferences for now?!
+//		if (id==DialogId.NEW_GAME.ordinal()) {
+//			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//			builder.setMessage("Do you want to join a new game?")
+//				.setCancelable(false)
+//				.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//					public void onClick(DialogInterface dialog, int id) {
+//						//MyActivity.this.finish();
+//						dialog.cancel();
+//						showDialog(DialogId.PLAYER_NAME.ordinal());
+//						playerDialogActive = true;
+//					}       
+//				})       
+//				.setNegativeButton("No", new DialogInterface.OnClickListener() {
+//					public void onClick(DialogInterface dialog, int id) {                
+//						dialog.cancel();           
+//						playerDialogActive = false;
+//						// TODO: carry on?
+//						playIfReady();
+//					}     
+//				});
+//			return builder.create();
+//		}
 		if (id==DialogId.PLAYER_NAME.ordinal()) {
-			final Dialog d = new Dialog(this);
-			d.setContentView(R.layout.player_name_dialog);
-			d.setCancelable(true);
-			d.setTitle("Player Name:");
-			d.setOnCancelListener(new OnCancelListener()  {				
+			playerNameDialog = new Dialog(this);
+			playerNameDialog.setContentView(R.layout.player_name_dialog);
+			playerNameDialog.setCancelable(true);
+			playerNameDialog.setTitle("Player Name:");
+			playerNameDialog.setOnCancelListener(new OnCancelListener()  {				
 				@Override
 				public void onCancel(DialogInterface dialog) {
 					dismissDialog(DialogId.PLAYER_NAME.ordinal());
-					// TODO carry on?
-					//BackgroundThread.cancel(HomeActivity.this);
-					playerDialogActive = false;
-					playIfReady();
+					BackgroundThread.cancel(HomeActivity.this);
 				}
 			});
-			Button ok = (Button)d.findViewById(R.id.player_name_dialog_ok);
+			Button ok = (Button)playerNameDialog.findViewById(R.id.player_name_dialog_ok);
 			ok.setOnClickListener(new OnClickListener() {
 				@Override
 				public void onClick(View v) {
-					EditText et = (EditText)d.findViewById(R.id.player_name_dialog_edit_text);
-					BackgroundThread.setPlayerName(et.getText().toString());
-					Log.d(TAG,"Set player name to "+et.getText().toString());
+					EditText et = (EditText)playerNameDialog.findViewById(R.id.player_name_dialog_edit_text);
+					String playerName = et.getText().toString();
+					if (playerName==null || playerName.length()==0)
+						// leave visible
+						return;
+					SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(HomeActivity.this);
+					preferences.edit().putString(ExplodingPreferences.PLAYER_NAME, playerName).commit();
+					Log.d(TAG,"Set player name to "+playerName);
 					dismissDialog(DialogId.PLAYER_NAME.ordinal());
-					playerDialogActive = false;
+					//playerDialogActive = false;
 					BackgroundThread.restart(HomeActivity.this);
 				}
 			});
-			return d;
+			return playerNameDialog;
 		}
 		// TODO Auto-generated method stub
 		return super.onCreateDialog(id);
@@ -268,22 +292,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
 	protected void onPrepareDialog(int id, Dialog dialog) {
 		if (id==DialogId.PLAYER_NAME.ordinal()) {
 			EditText et = (EditText)dialog.findViewById(R.id.player_name_dialog_edit_text);
-			String playerName = BackgroundThread.getPlayerName();
-			if (playerName==null || playerName.length()==0) {
-				SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-				playerName = preferences.getString("defaultPlayerName", "");
-			}
-			ClientState clientState = BackgroundThread.getClientState(this);
-			if (clientState!=null && clientState.getCache()!=null) {
-				// get players...
-				List<Object> facts = clientState.getCache().getFacts(Player.class.getName());
-				//Log.d(TAG,"Found "+facts.size()+" Player objects in cache");
-				if (facts.size()>0) {
-					Player player = (Player)facts.get(0);
-					if (player.getName()!=null)
-						playerName = player.getName();
-				}
-			}
+			String playerName = ExplodingPreferences.getPlayerName(this);
 			et.setText(playerName);
 		}
 		super.onPrepareDialog(id, dialog);
@@ -332,6 +341,9 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			break;
 		}
 
+		Button start_button = (Button)findViewById(R.id.main_start_button);
+		start_button.setEnabled(enableRetry);
+		
 		if (clientState.getClientStatus()==ClientStatus.LOGGING_IN) 
 			showDialog(DialogId.CONNECTING.ordinal());
 		else if (connectingPd!=null && connectingPd.isShowing())
@@ -418,7 +430,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
 		Log.d(TAG, "onRestart()");
 	}
 
-    private boolean showPlayerNameDialog = false;
+    private boolean startedFromHome = false;
     private boolean hasFocus = false;
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onResume()
@@ -431,11 +443,16 @@ public class HomeActivity extends Activity implements ClientStateListener {
 
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		boolean shutdownClient = preferences.getBoolean("shutdownClient", false);
+		boolean restartClient = preferences.getBoolean("restartClient", false);
+		if (restartClient) {
+			preferences.edit().putBoolean("restartClient", false).commit();
+		}
 		if (shutdownClient) {
-			BackgroundThread.shutdown(this);
 			preferences.edit().putBoolean("shutdownClient", false).commit();
 		}
-
+		if (shutdownClient || restartClient) {
+			BackgroundThread.shutdown(this);
+		}
 		ClientState clientState = BackgroundThread.getClientState(this);
 
 		// this might start it playing...
@@ -444,18 +461,21 @@ public class HomeActivity extends Activity implements ClientStateListener {
 		// now in debug
 //		TextView urlTextView = (TextView)findViewById(R.id.main_server_url_text_view);
 		// preferences edited by PreferencesActivity
-		boolean restartClient = preferences.getBoolean("restartClient", false);
-		if (restartClient) {
-			showPlayerNameDialog = true;
-			preferences.edit().putBoolean("restartClient", false).commit();
+		if (startedFromHome) {
+			// ??
+			// restartClient = true
+			startedFromHome = false;
+			// auto-start on first start
+			if (clientState==null || clientState.getClientStatus()==ClientStatus.CONFIGURING)
+				restartClient = true;
 		}
-		if (showPlayerNameDialog) {
-			showPlayerNameDialog = false;
-			
-			if ((connectingPd==null || !connectingPd.isShowing()) && (gettingStatePd==null || !gettingStatePd.isShowing())) {
-				showDialog(DialogId.NEW_GAME.ordinal());
-				playerDialogActive = true;
-			}
+		if (restartClient) {
+			//BackgroundThread.cancel(this);
+			String playerName = ExplodingPreferences.getPlayerName(this);
+			if (playerName==null || playerName.length()==0)
+				showDialog(DialogId.PLAYER_NAME.ordinal());
+			else
+				BackgroundThread.restart(this);
 		}
 		else
 			playIfReady();
