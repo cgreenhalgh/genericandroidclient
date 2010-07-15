@@ -212,7 +212,7 @@ public class BackgroundThread implements Runnable {
 			return null;
 		String serverUrl = preferences.getString("serverUrl", null);
 		if (serverUrl==null || serverUrl.length()==0) {
-			Log.e(TAG,"doLogin: serverUrl==null");
+			Log.e(TAG,"getServerUrl: serverUrl==null");
 			setClientStatus(ClientStatus.ERROR_IN_SERVER_URL, "The Server URL is not set\n(See Preferences)");
 			return null;
 		}
@@ -288,11 +288,20 @@ public class BackgroundThread implements Runnable {
 				currentClientState.setLoginMessage(reply.getMessage());
 				//fireClientStateChanged(currentClientState.clone());
 
-				if (currentClientState.getLoginStatus()==LoginReplyMessage.Status.OK && currentClientState.getGameStatus()==GameStatus.ACTIVE) {
+				if (currentClientState.getLoginStatus()==LoginReplyMessage.Status.OK && 
+						(currentClientState.getGameStatus()==GameStatus.ACTIVE ||
+								currentClientState.getGameStatus()==GameStatus.NOT_STARTED ||
+								currentClientState.getGameStatus()==GameStatus.ENDING)) {
 					currentClientState.setClientStatus(ClientStatus.GETTING_STATE);
-				} else {
-					currentClientState.setClientStatus(ClientStatus.ERROR_DOING_LOGIN);
+				} else if ((currentClientState.getLoginStatus()==LoginReplyMessage.Status.OK && 
+						(currentClientState.getGameStatus()==GameStatus.ENDED)) ||
+						currentClientState.getLoginStatus()==LoginReplyMessage.Status.GAME_NOT_FOUND) {
+					// game is over - shouldn't ever actually be returned to login
+					currentClientState.setClientStatus(ClientStatus.STOPPED);
 				}
+				else
+					currentClientState.setClientStatus(ClientStatus.ERROR_DOING_LOGIN);
+
 				fireClientStateChanged(currentClientState.clone());
 				
 			}
@@ -457,7 +466,7 @@ public class BackgroundThread implements Runnable {
 		}
 	}
 	/** set game status and fire */
-	private static synchronized void setGameStatus(GameStatus gameStatus) {
+	public static synchronized void setGameStatus(GameStatus gameStatus) {
 		if (singleton!=Thread.currentThread()) {
 			Log.e(TAG, "setGameStatus called by thread non-current thread");
 			throw new RuntimeException("setGameStatus called by thread non-current thread");

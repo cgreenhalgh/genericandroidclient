@@ -124,7 +124,7 @@ public class HomeActivity extends Activity implements ClientStateListener {
 		startActivity(intent);
 	}
 	private void playIfReady() {
-		if ((playerNameDialog!=null && playerNameDialog.isShowing()) || (connectingPd!=null && connectingPd.isShowing()) || (this.gettingStatePd!=null && gettingStatePd.isShowing())) {
+		if ((playerNameDialog!=null && playerNameDialog.isShowing()) || (waitingForGamePd!=null && waitingForGamePd.isShowing()) || (connectingPd!=null && connectingPd.isShowing()) || (this.gettingStatePd!=null && gettingStatePd.isShowing())) {
 			Log.d(TAG,"Not ready to play due to dialog(s)");
 			return;
 		}
@@ -196,10 +196,11 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			BackgroundThread.retry(this);
 	}
 	private static enum DialogId {
-		CONNECTING, GETTING_STATE, /*NEW_GAME,*/ PLAYER_NAME
+		CONNECTING, GETTING_STATE, /*NEW_GAME,*/ PLAYER_NAME, WAITING_FOR_GAME
 	}
 	private ProgressDialog connectingPd;
 	private ProgressDialog gettingStatePd;
+	private ProgressDialog waitingForGamePd;
 	private Dialog playerNameDialog;
     /* (non-Javadoc)
 	 * @see android.app.Activity#onCreateDialog(int)
@@ -229,6 +230,18 @@ public class HomeActivity extends Activity implements ClientStateListener {
 				}
 			});
 			return gettingStatePd;
+		}
+		if (id==DialogId.WAITING_FOR_GAME.ordinal()) {
+			waitingForGamePd = new ProgressDialog(this);
+			waitingForGamePd.setCancelable(true);
+			waitingForGamePd.setMessage("Waiting for game to start...");
+			waitingForGamePd.setOnCancelListener(new OnCancelListener() {
+				@Override
+				public void onCancel(DialogInterface dialog) {
+					//BackgroundThread.cancel(HomeActivity.this);
+				}
+			});
+			return waitingForGamePd;
 		}
 		// Handle through debug/preferences for now?!
 //		if (id==DialogId.NEW_GAME.ordinal()) {
@@ -332,7 +345,10 @@ public class HomeActivity extends Activity implements ClientStateListener {
 		case POLLING:
 		case IDLE:
 		case PAUSED:
-			enablePlay = true;
+			if (clientState.getGameStatus()!=null && clientState.getGameStatus()!=GameStatus.NOT_STARTED)
+				enablePlay = true;
+			else
+				enablePlay = false;
 			enableRetry = false;
 			break;
 		default:
@@ -354,10 +370,21 @@ public class HomeActivity extends Activity implements ClientStateListener {
 			dismissDialog(DialogId.GETTING_STATE.ordinal());
 			if (clientState.getClientStatus()==ClientStatus.PAUSED || 
 					clientState.getClientStatus()==ClientStatus.POLLING|| 
-					clientState.getClientStatus()==ClientStatus.IDLE)
-				play();
+					clientState.getClientStatus()==ClientStatus.IDLE) {
+				if (clientState.getGameStatus()!=null && clientState.getGameStatus()==GameStatus.NOT_STARTED)
+					showDialog(DialogId.WAITING_FOR_GAME.ordinal());
+				else
+					play();
+			}
 		}
-
+		if ((clientState.getClientStatus()==ClientStatus.PAUSED || 
+				clientState.getClientStatus()==ClientStatus.POLLING|| 
+				clientState.getClientStatus()==ClientStatus.IDLE) &&
+				clientState.getGameStatus()!=null && clientState.getGameStatus()==GameStatus.NOT_STARTED) {
+			showDialog(DialogId.WAITING_FOR_GAME.ordinal());			
+		} else if (waitingForGamePd!=null && waitingForGamePd.isShowing())
+			dismissDialog(DialogId.WAITING_FOR_GAME.ordinal());				
+		
 		// Now in debug
 //		// update status
 		TextView statusTextView = (TextView)findViewById(R.id.main_status_text_view);

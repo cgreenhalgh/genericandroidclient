@@ -51,6 +51,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
 
+import uk.ac.horizon.ug.exploding.client.model.Game;
 import uk.ac.horizon.ug.exploding.client.model.Member;
 import uk.ac.horizon.ug.exploding.client.model.ModelUtils;
 import uk.ac.horizon.ug.exploding.client.model.Player;
@@ -499,6 +500,7 @@ public class Client {
 					Log.d(TAG,"Add fact "+val);
 					if (!changedTypes.contains(typeName))
 						changedTypes.add(typeName);
+					checkSpecialCaseUpdates(val);
 				} else if (messageType==MessageType.FACT_UPD || messageType==MessageType.FACT_DEL) {
 					Object val = message.getOldVal();
 					String typeName = val.getClass().getName();
@@ -533,12 +535,25 @@ public class Client {
 						Log.i(TAG,"Update new fact "+val);
 						if (!changedTypes.contains(typeName))
 							changedTypes.add(typeName);
+						checkSpecialCaseUpdates(val);
 					}
 				}
 			}
 		}
 		BackgroundThread.cachedStateChanged(this, changedTypes);
 		return messages;
+	}
+	/**
+	 * @param val
+	 */
+	private void checkSpecialCaseUpdates(Object val) {
+		if (val instanceof Game) {
+			Game game = (Game)val;
+			if (game.isSetState()) {
+				Log.d(TAG,"Update game state to "+game.getState());
+				BackgroundThread.setGameStatus(GameStatus.valueOf(game.getState()));
+			}
+		}
 	}
 	/** remove a Fact from the cache without signalling state change */
 	public void removeFactSilent(Object fact) {
