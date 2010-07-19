@@ -19,6 +19,7 @@
  */
 package uk.ac.horizon.ug.exploding.client;
 
+import uk.ac.horizon.ug.exploding.client.logging.ActivityLogger;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -31,6 +32,8 @@ import android.telephony.TelephonyManager;
  *
  */
 public class ExplodingPreferences extends PreferenceActivity {
+
+	private ActivityLogger logger = new ActivityLogger(this);
 
 	/**
 	 * 
@@ -45,6 +48,7 @@ public class ExplodingPreferences extends PreferenceActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		logger.logOnCreate(this, savedInstanceState);
 		addPreferencesFromResource(R.xml.preferences);
 		// force initialisation of device ID
 		getDeviceId(this);
@@ -69,5 +73,17 @@ public class ExplodingPreferences extends PreferenceActivity {
 	public static String getPlayerName(Context context) {
 		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
 		return preferences.getString(PLAYER_NAME, "");
+	}
+
+	@Override
+	protected void onPause() {
+		logger.logOnPause();
+		super.onPause();
+	}
+
+	@Override
+	protected void onResume() {
+		logger.logOnResume();
+		super.onResume();
 	}
 }

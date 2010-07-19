@@ -32,6 +32,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,7 +51,9 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.StringEntity;
+import org.json.JSONStringer;
 
+import uk.ac.horizon.ug.exploding.client.logging.LoggingUtils;
 import uk.ac.horizon.ug.exploding.client.model.Game;
 import uk.ac.horizon.ug.exploding.client.model.Member;
 import uk.ac.horizon.ug.exploding.client.model.ModelUtils;
@@ -82,6 +85,7 @@ import com.thoughtworks.xstream.io.xml.DomDriver;
  */
 public class Client {
 	private static final String TAG = "Client";
+	private static final String LOGTYPE_CLIENT = "Client";
 	//static Logger logger = Logger.getLogger(Client.class.getName());
 	protected URI conversationUrl;
 	protected String clientId;
@@ -89,6 +93,48 @@ public class Client {
 	/** queued message state */
 	private enum QueuedMessageStatus {
 		QUEUED, CONNECTING, SENDING, AWAITING_STATUS, AWAITING_RESPONSE, DONE
+	}
+	/** log from thread */
+	private void log(String message) {
+		log(message, null, null);
+	}
+	private void log(String message, String extraKey, Object extraValue) {
+		try {
+			JSONStringer js = new JSONStringer();
+			js.object();
+			js.key("client");
+			js.value(this.hashCode());
+			js.key("message");
+			js.value(message);
+			if (extraKey!=null) {
+				js.key(extraKey);
+				js.value(extraValue);
+			}
+			js.endObject();
+			LoggingUtils.log(LOGTYPE_CLIENT, js.toString());
+		}
+		catch (Exception e) {
+			Log.e(TAG,"Logging "+message, e);
+		}
+	}
+	private void logCreated() {
+		try {
+			JSONStringer js = new JSONStringer();
+			js.object();
+			js.key("client");
+			js.value(this.hashCode());
+			js.key("message");
+			js.value("created");
+			js.key("clientId");
+			js.value(clientId);
+			js.key("conversationUrl");
+			js.value(conversationUrl);
+			js.endObject();
+			LoggingUtils.log(LOGTYPE_CLIENT, js.toString());
+		}
+		catch (Exception e) {
+			Log.e(TAG,"Logging created", e);
+		}
 	}
 	/** a queued message */
 	public class QueuedMessage {
@@ -114,6 +160,7 @@ public class Client {
 		this.httpClient = httpClient;
 		this.conversationUrl = conversationUrl;
 		this.clientId = clientId;
+		logCreated();
 	}
 	/**
 	 * @param conversationUrl
@@ -126,6 +173,7 @@ public class Client {
 		this.httpClient = httpClient;
 		this.conversationUrl = new URI(conversationUrl);
 		this.clientId = clientId;
+		logCreated();
 	}
 	
 	public URI getConversationUrl() {
@@ -184,6 +232,7 @@ public class Client {
 			qm.status = QueuedMessageStatus.QUEUED;
 			queuedMessages.addLast(qm);
 			queuedMessages.notify();
+			log("queueMessage", "message", msg.toString());
 			return qm;
 		}
 	}
@@ -213,6 +262,7 @@ public class Client {
 	 * @return true if message was known and cancelled */
 	public boolean cancelMessage(QueuedMessage qm, boolean callListeners) {
 		synchronized (queuedMessages) {
+			log("cancelMessage", "message", qm.message.toString());
 			if (queuedMessages.contains(qm)) {
 				queuedMessages.remove(qm);
 				Log.d(TAG,"cancelMessage for queued Message");
@@ -308,6 +358,7 @@ public class Client {
 	/** internal async send */
 	@SuppressWarnings("unchecked")
 	private synchronized List<Message> sendQueuedMessageInternal(QueuedMessage qm) {
+		log("sendQueuedMessage", "message", qm.message.toString());
 		currentMessage = qm;
 		sendMessageThread = Thread.currentThread();
 		HttpPost request  = new HttpPost(conversationUrl);
@@ -328,6 +379,7 @@ public class Client {
 		xs.marshal(messages, new CompactWriter(new OutputStreamWriter(baos,Charset.forName("UTF-8"))));
 		byte [] bytes = baos.toByteArray();
 		Log.d(TAG, "Sent: "+bytes.length+" bytes");
+		log("sendQueuedMessage.bytes", "bytes", bytes.length);
 		request.setEntity(new ByteArrayEntity(bytes));
 		
 		synchronized(queuedMessages) {
@@ -344,6 +396,7 @@ public class Client {
 		}
 		catch (Exception e) {
 			Log.e(TAG,"Doing http request", e);
+			log("sendQueuedMessage.error", "exception", e.toString());
 			synchronized(queuedMessages) {
 				currentMessage = null;
 				if (qm.cancelled) 
@@ -369,6 +422,7 @@ public class Client {
 		Log.d(TAG, "Http status: "+statusLine);
 		int status = statusLine.getStatusCode();
 		if (status!=200) {
+			log("sendQueuedMessage.error", "status", status);
 			if (reply.getEntity()!=null)
 				try {
 					reply.getEntity().consumeContent();
@@ -405,6 +459,7 @@ public class Client {
 		}
 		catch (Exception e) {
 			Log.e(TAG,"Reading response", e);
+			log("sendQueuedMessage.error", "error", e.toString());
 			synchronized(queuedMessages) {
 				currentMessage = null;
 				if (qm.cancelled)
@@ -417,6 +472,7 @@ public class Client {
 				return null;
 			}
 		}
+		log("sendQueueMessage.ok","messages",Arrays.toString(messages.toArray()));
 		Log.i(TAG, "Response "+messages.size()+" messages: "+messages);
 
 		synchronized(queuedMessages) {
@@ -468,6 +524,7 @@ public class Client {
 	/** poll 
 	 * @throws JSONException */
 	public List<Message> poll() throws IOException {
+		log("poll");
 		Message msg = new Message();
 		msg.setSeqNo(seqNo++);
 		msg.setType(MessageType.POLL.name());
@@ -498,6 +555,7 @@ public class Client {
 					}
 					typeFacts.put(getFactID(val), val);
 					Log.d(TAG,"Add fact "+val);
+					log("addFact", "newVal", val.toString());
 					if (!changedTypes.contains(typeName))
 						changedTypes.add(typeName);
 					checkSpecialCaseUpdates(val);
@@ -514,13 +572,18 @@ public class Client {
 					if (found) {
 						typeFacts.remove(key);
 						Log.i(TAG,"Removing/update old fact "+val);
+						if (messageType==MessageType.FACT_DEL)
+							log("deleteFact", "oldVal", val.toString());
 						if (!changedTypes.contains(typeName))
 							changedTypes.add(typeName);						
 					}
-					else
+					else {
+						log("deleteFact.notfound", "oldVal", val.toString());
 						Log.i(TAG, "Did not find old fact to remove: "+val);
+					}
 					if (messageType==MessageType.FACT_UPD) {
 						val = message.getNewVal();
+						log("updateFact", "newVal", val.toString());
 						if (!val.getClass().getName().equals(typeName))
 							Log.e(TAG, "Nominal Update from class "+typeName+" to "+val.getClass().getName());
 						typeFacts = facts.get(typeName);
@@ -559,6 +622,7 @@ public class Client {
 	public void removeFactSilent(Object fact) {
 		if (fact==null)
 			return;
+		log("removeFactSilent", "fact", fact.toString());
 		synchronized(facts) {
 			String typeName = getFactType(fact);
 			HashMap<Object,Object> typeFacts = facts.get(typeName);

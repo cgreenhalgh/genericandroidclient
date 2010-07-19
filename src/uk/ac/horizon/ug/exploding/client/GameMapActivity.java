@@ -1,5 +1,6 @@
 /**
  * Copyright 2010 The University of Nottingham
+
  * 
  * This file is part of GenericAndroidClient.
  *
@@ -23,6 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import uk.ac.horizon.ug.exploding.client.logging.ActivityLogger;
+import uk.ac.horizon.ug.exploding.client.logging.LoggingActivity;
 import uk.ac.horizon.ug.exploding.client.model.Member;
 import uk.ac.horizon.ug.exploding.client.model.Message;
 import uk.ac.horizon.ug.exploding.client.model.Player;
@@ -61,11 +64,13 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 	private static final int MIN_ZOOM_LEVEL = 14;
 	private MyLocationOverlay myLocationOverlay;
 	private MyMapOverlay itemOverlay;
+	private ActivityLogger logger = new ActivityLogger(this);
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		// TODO Auto-generated method stub
 		super.onCreate(savedInstanceState);
+		logger.logOnCreate(this, savedInstanceState);
 		try {
 			Log.d(TAG, "Try to load map view");
 			setContentView(R.layout.map);
@@ -111,6 +116,7 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 	 * @param zoneID
 	 */
 	protected void zoneChanged(String zoneID) {
+//		logger.log("Zone", "zoneID", zoneID);
 		Log.d(TAG, "Zone change to "+zoneID);
 		if (zoneID!=null) {
 			Vibrator vibrator = (Vibrator)getSystemService(VIBRATOR_SERVICE);
@@ -145,6 +151,7 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
+		logger.logOnOptionsItemSelected(item);
 		switch (item.getItemId()) {
 		case R.id.map_my_location:
 			centreOnMyLocation();
@@ -223,6 +230,7 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 
 	@Override
 	protected void onPause() {
+		logger.logOnPause();
 		// TODO Auto-generated method stub
 		//LocationUtils.unregisterOnThread(this, this, null);
 		myLocationOverlay.disableCompass();
@@ -232,6 +240,7 @@ public class GameMapActivity extends MapActivity implements ClientStateListener 
 
 	@Override
 	protected void onResume() {
+		logger.logOnResume();
 		// TODO Auto-generated method stub
 		super.onResume();
 		myLocationOverlay.enableCompass();

@@ -21,6 +21,7 @@ package uk.ac.horizon.ug.exploding.client;
 
 import java.util.List;
 
+import uk.ac.horizon.ug.exploding.client.logging.LoggingActivity;
 import uk.ac.horizon.ug.exploding.client.model.Game;
 import uk.ac.horizon.ug.exploding.client.model.Zone;
 import android.app.Activity;
@@ -33,7 +34,7 @@ import android.widget.TextView;
  * @author cmg
  *
  */
-public class GameStatusActivity extends Activity implements ClientStateListener {
+public class GameStatusActivity extends LoggingActivity implements ClientStateListener {
 
 	private static final String TAG = "Ga,eStatus";
 

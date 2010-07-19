@@ -44,7 +44,9 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONObject;
+import org.json.JSONStringer;
 
+import uk.ac.horizon.ug.exploding.client.logging.LoggingUtils;
 import uk.ac.horizon.ug.exploding.client.model.Player;
 import uk.ac.horizon.ug.exploding.client.model.Position;
 
@@ -69,6 +71,8 @@ public class BackgroundThread implements Runnable {
 	// 10 seconds for testing?!
 	private static final int POLL_INTERVAL_MS = 10000;
 	private static Handler handler;
+	public static final String LOGTYPE_CLIENT_STATE = "ClientState";
+	public static final String LOGTYPE_BACKGROUND_THREAD = "BackgroundThread";
 	/** cons - private */
 	private BackgroundThread() {
 		super();
@@ -82,9 +86,33 @@ public class BackgroundThread implements Runnable {
 	/** singleton */
 	private static Thread singleton;
 	private long lastPollTime;
+	/** log from thread */
+	private void log(String message) {
+		log(message, null, null);
+	}
+	private void log(String message, String extraKey, String extraValue) {
+		try {
+			JSONStringer js = new JSONStringer();
+			js.object();
+			js.key("thread");
+			js.value(Thread.currentThread().getName());
+			js.key("message");
+			js.value(message);
+			if (extraKey!=null) {
+				js.key(extraKey);
+				js.value(extraValue);
+			}
+			js.endObject();
+			LoggingUtils.log(LOGTYPE_BACKGROUND_THREAD, js.toString());
+		}
+		catch (Exception e) {
+			Log.e(TAG,"Logging "+message, e);
+		}
+	}
 	/** run method */
 	@Override
 	public void run() {
+		log("run()");
 		mainloop:
 		while (Thread.currentThread()==singleton) {
 			try {
@@ -167,6 +195,7 @@ public class BackgroundThread implements Runnable {
 				// TODO ERROR?
 			}
 		}
+		log("done");
 		Log.i(TAG, "Background thread "+Thread.currentThread()+" exiting (interrupted="+Thread.interrupted()+")");
 	}
 	/** HTTP client */
@@ -265,6 +294,7 @@ public class BackgroundThread implements Runnable {
 			String xmlText = xs.toXML(login);
 			// name?
 			Log.d(TAG,"Login: "+xmlText);
+			log("login", "request", xmlText);
 			//request.setHeader("Content-Type", )
 			request.setEntity(new StringEntity(xmlText));
 			HttpResponse response = httpClient.execute(request);
@@ -280,6 +310,7 @@ public class BackgroundThread implements Runnable {
 			LoginReplyMessage reply = (LoginReplyMessage )xs.fromXML(response.getEntity().getContent());
 			response.getEntity().consumeContent();
 			Log.d(TAG,"Reply: "+reply);
+			log("loginReply", "reply", reply.toString());
 			synchronized (BackgroundThread.class) {
 				checkCurrentThread();
 
@@ -371,6 +402,7 @@ public class BackgroundThread implements Runnable {
 				pos.setElevation(0.0);
 			player.setPosition(pos);
 		}
+		log("updatePlayer()");
 		// relying on this being handled as a special case - no old value, no ID!
 		client.queueMessage(client.updateFactMessage(null, player), null);
 	}
@@ -489,6 +521,17 @@ public class BackgroundThread implements Runnable {
 	}
 	/** fire event listeners */
 	private static void fireClientStateChangedInHandler(final ClientState clientState) {
+		try {
+			JSONStringer js = new JSONStringer();
+			js.object();
+			js.key("clientState");
+			js.value(clientState.toString());
+			js.endObject();
+			LoggingUtils.log(LOGTYPE_CLIENT_STATE, clientState.toString());
+		}
+		catch (Exception e) {
+			Log.e(TAG,"Logging clientState changed="+clientState, e);
+		}
 		switch(clientState.getClientStatus()) {
 		case CANCELLED_BY_USER:
 		case ERROR_DOING_LOGIN:
@@ -560,6 +603,7 @@ public class BackgroundThread implements Runnable {
 	}
 	/** restart client */
 	public static synchronized void restart(Context context) {
+		LoggingUtils.log(LOGTYPE_BACKGROUND_THREAD, "{\"message\"=\"restart()\"}");
 		Log.i(TAG, "Restart client - explicit request");
 		currentClientState = new ClientState(ClientStatus.NEW, GameStatus.UNKNOWN);
 		if (singleton!=null && singleton.isAlive()) 
@@ -569,6 +613,7 @@ public class BackgroundThread implements Runnable {
 	}
 	/** retry client */
 	public static synchronized void retry(Context context) {
+		LoggingUtils.log(LOGTYPE_BACKGROUND_THREAD, "{\"message\"=\"retry()\"}");
 		if (currentClientState==null)
 			currentClientState = new ClientState(ClientStatus.NEW, GameStatus.UNKNOWN);
 		Log.i(TAG, "Retry client - explicit request (state "+currentClientState.getClientStatus());
@@ -588,6 +633,7 @@ public class BackgroundThread implements Runnable {
 		}
 	}
 	public static synchronized void cancel(Context context) {
+		LoggingUtils.log(LOGTYPE_BACKGROUND_THREAD, "{\"message\"=\"cancel()\"}");
 		if (currentClientState==null)
 			currentClientState = new ClientState(ClientStatus.NEW, GameStatus.UNKNOWN);
 		Log.i(TAG, "Cancel client - explicit request (state "+currentClientState.getClientStatus());
@@ -610,6 +656,7 @@ public class BackgroundThread implements Runnable {
 		}
 	}
 	public static synchronized void shutdown(Context context) {
+		LoggingUtils.log(LOGTYPE_BACKGROUND_THREAD, "{\"message\"=\"shutdown()\"}");
 		checkThread(context);
 		Log.i(TAG, "Shutdown client - explicit request (state "+currentClientState.getClientStatus());
 		Log.i(TAG, "Cancel from "+currentClientState.getClientStatus()+" to CANCELLED_BY_USER");

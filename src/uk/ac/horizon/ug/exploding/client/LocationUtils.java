@@ -22,6 +22,10 @@ package uk.ac.horizon.ug.exploding.client;
 import java.util.Iterator;
 import java.util.List;
 
+import org.json.JSONStringer;
+
+import uk.ac.horizon.ug.exploding.client.logging.LoggingUtils;
+
 import android.content.Context;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
@@ -47,6 +51,10 @@ public class LocationUtils {
 	private static int MAX_CURRENT_LOCATION_AGE_MS = 30000;
 	private static long lastCheck = 0;
 	private static int MIN_CHECK_INTERVAL = 1000;
+	
+	public static final String LOGTYPE_LOCATION = "LOCATION";// as for Aether's notebook
+	public static final String LOGTYPE_GPS_STATUS = "GpsStatus";// as for Aether's notebook
+	
 	public static synchronized void updateRequired(Context context, boolean req) {
 		Log.d(TAG,"updateRequired("+req+")");
 		if (locationCallback==null) {
@@ -205,6 +213,56 @@ public class LocationUtils {
 		@Override
 		public void onLocationChanged(Location loc) {
 			Log.i(TAG,"Location provider="+loc.getProvider()+", lat="+loc.getLatitude()+", long="+loc.getLongitude()+", bearing="+(loc.hasBearing() ? ""+loc.getBearing() : "NA")+", speed="+(loc.hasSpeed() ? ""+loc.getSpeed() : "NA")+", accuracy="+(loc.hasAccuracy() ? ""+loc.getAccuracy() : "NA")+", alt="+(loc.hasAltitude() ? ""+loc.getAltitude() : "NA"));
+			try {
+				JSONStringer js = new JSONStringer();
+				// as er Aether's notebook
+				js.object();
+				js.key("accuracy");
+				if(loc.hasAccuracy())
+					js.value(loc.getAccuracy());
+				else
+					js.value(null);
+				
+				js.key("altitude");
+				if(loc.hasAltitude())
+					js.value(loc.getAltitude());
+				else
+					js.value(null);
+				
+				js.key("bearing");
+				if(loc.hasBearing())
+					js.value(loc.getBearing());
+				else
+					js.value(null);
+				
+				js.key("latitude");
+				js.value(loc.getLatitude());
+				
+				js.key("longitude");
+				js.value(loc.getLongitude());
+				
+				js.key("provider");
+				js.value(loc.getProvider());
+				
+				js.key("speed");
+				if(loc.hasSpeed())
+					js.value(loc.getSpeed());
+				else
+					js.value(null);
+				
+				Bundle extras = loc.getExtras();
+				js.key("extras");
+				if(extras != null)
+					js.value(extras.toString());
+				else
+					js.value(null);
+
+				js.endObject();
+				LoggingUtils.log(LOGTYPE_LOCATION, js.toString());
+			}
+			catch (Exception e) {
+				Log.e(TAG,"Logging "+loc);
+			}
 			ZoneService.updateLocation(context, loc);
 		}
 

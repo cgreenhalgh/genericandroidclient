@@ -23,6 +23,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 
+import uk.ac.horizon.ug.exploding.client.logging.LoggingActivity;
+
 import android.app.Activity;
 import android.content.Context;
 import android.location.GpsSatellite;
@@ -40,7 +42,7 @@ import android.widget.TextView;
  * @author cmg
  *
  */
-public class GpsStatusActivity extends Activity implements Listener, LocationListener {
+public class GpsStatusActivity extends LoggingActivity implements Listener, LocationListener {
 
 	private static final String GPS_PROVIDER = "gps";
 	private static final String TAG = "GpsStatus";

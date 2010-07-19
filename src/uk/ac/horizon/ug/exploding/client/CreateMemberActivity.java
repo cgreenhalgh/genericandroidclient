@@ -20,6 +20,7 @@
 package uk.ac.horizon.ug.exploding.client;
 
 import uk.ac.horizon.ug.exploding.client.Client.QueuedMessage;
+import uk.ac.horizon.ug.exploding.client.logging.LoggingActivity;
 import uk.ac.horizon.ug.exploding.client.model.Member;
 import uk.ac.horizon.ug.exploding.client.model.Position;
 import android.app.Activity;
@@ -40,7 +41,7 @@ import android.widget.Toast;
  * @author cmg
  *
  */
-public class CreateMemberActivity extends Activity implements ClientMessageListener {
+public class CreateMemberActivity extends LoggingActivity implements ClientMessageListener {
 
 	private static final String TAG = "CreateMember";
 

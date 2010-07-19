@@ -19,6 +19,8 @@
  */
 package uk.ac.horizon.ug.exploding.client;
 
+import uk.ac.horizon.ug.exploding.client.logging.LoggingActivity;
+import uk.ac.horizon.ug.exploding.client.logging.LoggingUtils;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -35,7 +37,7 @@ import android.widget.TextView;
  * @author cmg
  *
  */
-public class DebugHomeActivity extends Activity implements ClientStateListener  {
+public class DebugHomeActivity extends LoggingActivity implements ClientStateListener  {
 	private static final String TAG = "DebugActivity";
     /** Called when the activity is first created. */
     @Override
@@ -106,6 +108,8 @@ public class DebugHomeActivity extends Activity implements ClientStateListener  
 	}
 	/** update visible dialogs */
 	private void updateDialogs(ClientState clientState) {
+		TextView logFileTextView = (TextView)findViewById(R.id.debug_log_file_text_view);
+		logFileTextView.setText(LoggingUtils.getLogFile()!=null ? LoggingUtils.getLogFile().toString() : "Not logging (internal error)");
 		// update status
 		TextView statusTextView = (TextView)findViewById(R.id.debug_status_text_view);
 		statusTextView.setText(clientState.getClientStatus().name());
