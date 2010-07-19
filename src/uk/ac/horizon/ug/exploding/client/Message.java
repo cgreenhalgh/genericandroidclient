@@ -193,5 +193,13 @@ public class Message {
 	public void setErrorMsg(String errorMsg) {
 		this.errorMsg = errorMsg;
 	}
+	@Override
+	public String toString() {
+		return "Message [ackSeq=" + ackSeq + ", errorMsg=" + errorMsg
+				+ ", handle=" + handle + ", newVal=" + newVal + ", oldVal="
+				+ oldVal + ", seqNo=" + seqNo + ", status=" + status
+				+ ", subsIx=" + subsIx + ", time=" + time + ", toFollow="
+				+ toFollow + ", type=" + type + "]";
+	}
 	
 }
