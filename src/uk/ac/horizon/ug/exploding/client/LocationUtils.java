@@ -54,7 +54,21 @@ public class LocationUtils {
 	
 	public static final String LOGTYPE_LOCATION = "LOCATION";// as for Aether's notebook
 	public static final String LOGTYPE_GPS_STATUS = "GpsStatus";// as for Aether's notebook
-	
+
+	/** distance in metres */
+	public static double getDistance(double lat1, double lon1, double lat2, double lon2) {
+		Location l1 = getLocation(lat1, lon1);
+		Location l2 = getLocation(lat2, lon2);
+		return l1.distanceTo(l2);
+	}
+	public static Location getLocation(double lat, double lon) {
+		Location l2 = new Location("gps");
+		l2.setLatitude(lat);
+		l2.setLongitude(lon);
+		l2.setAltitude(0);
+		return l2;
+	}
+
 	public static synchronized void updateRequired(Context context, boolean req) {
 		Log.d(TAG,"updateRequired("+req+")");
 		if (locationCallback==null) {
@@ -296,4 +310,5 @@ public class LocationUtils {
 		}
 	
 	}
+	
 }
