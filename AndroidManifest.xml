@@ -28,6 +28,7 @@
 <category android:name="android.intent.category.LAUNCHER"></category>
 </intent-filter>
 </activity>
+<activity android:name=".ClapperboardActivity" android:label="Current Device Information" android:launchMode="standard" android:screenOrientation="portrait"></activity>
 </application>
 
 

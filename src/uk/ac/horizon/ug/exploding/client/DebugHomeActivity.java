@@ -89,6 +89,13 @@ public class DebugHomeActivity extends LoggingActivity implements ClientStateLis
 			startActivity(intent);
 			return true;
 		}			
+		case R.id.debug_menu_clapperboard:
+		{
+			Intent intent = new Intent();
+			intent.setClass(this, ClapperboardActivity.class);
+			startActivity(intent);
+			return true;
+		}			
 		default:
 			return super.onOptionsItemSelected(item);			
 		}
