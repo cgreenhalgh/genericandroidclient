@@ -18,4 +18,17 @@
 <item>15000</item>
 <item>30000</item>
 </string-array>
+
+<string-array name="preferences_poll_to_follow_names"><item>Low Limit (10)</item>
+<item>Moderate Limit (30)</item>
+<item>High Limit (100)</item>
+<item>Unlimited</item>
+</string-array>
+
+<string-array name="preferences_poll_to_follow_values"><item>10</item>
+<item>30</item>
+<item>100</item>
+<item>0</item>
+</string-array>
+
 </resources>

@@ -6,6 +6,7 @@
 
 <CheckBoxPreference android:key="shutdownClient" android:title="Shut down client" android:summary="Shut down client when next visited"></CheckBoxPreference><EditTextPreference android:key="clientId" android:title="Device ID" android:summary="Unique device ID"></EditTextPreference>
 <ListPreference android:key="pollInterval" android:title="Poll Interval" android:summary="Time between getting updates from server" android:entries="@array/preferences_poll_interval_names" android:entryValues="@array/preferences_poll_interval_values" android:defaultValue="15000"></ListPreference>
+<ListPreference android:key="pollToFollow" android:title="Poll Number of Updates" android:summary="Number of updates to get from the server on poll" android:entries="@array/preferences_poll_to_follow_names" android:entryValues="@array/preferences_poll_to_follow_values" android:defaultValue="30"></ListPreference>
 
 <CheckBoxPreference android:title="Standalone Debug Mode" android:selectable="true" android:summary="Allow access to all actions" android:key="standaloneMode" android:enabled="true"></CheckBoxPreference>
 </PreferenceScreen>

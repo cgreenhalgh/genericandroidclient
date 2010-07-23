@@ -198,6 +198,18 @@ public class BackgroundThread implements Runnable {
 		log("done");
 		Log.i(TAG, "Background thread "+Thread.currentThread()+" exiting (interrupted="+Thread.interrupted()+")");
 	}
+	private int getToFollow() {
+		SharedPreferences preferences = getSharedPreferences();
+		if (preferences!=null) {
+			try {
+				return Integer.parseInt(preferences.getString("pollToFollow", "0"));
+			}
+			catch (NumberFormatException e) {
+				Log.e(TAG, "Getting pollToFollow", e);
+			}
+		}
+		return 0;
+	}
 	/** HTTP client */
 	private HttpClient httpClient;
 	/** get HTTP Client */
@@ -359,7 +371,7 @@ public class BackgroundThread implements Runnable {
 		try {
 			updatePlayer();
 			client.sendQueuedMessages();
-			client.poll();
+			client.poll(getToFollow());
 			lastPollTime = System.currentTimeMillis();
 			// success = good
 			setClientStatus(ClientStatus.POLLING, "Ready to play");
@@ -375,7 +387,7 @@ public class BackgroundThread implements Runnable {
 			setClientStatus(ClientStatus.POLLING, "Trying to get updates");	
 			updatePlayer();
 			client.sendQueuedMessages();
-			client.poll();
+			client.poll(getToFollow());
 			// success = good
 			setClientStatus(ClientStatus.IDLE, "Ready to play");			
 		}

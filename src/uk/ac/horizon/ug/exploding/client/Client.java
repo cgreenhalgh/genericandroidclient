@@ -54,6 +54,7 @@ import org.apache.http.entity.StringEntity;
 import org.json.JSONStringer;
 
 import uk.ac.horizon.ug.exploding.client.logging.LoggingUtils;
+
 import uk.ac.horizon.ug.exploding.client.model.Game;
 import uk.ac.horizon.ug.exploding.client.model.Member;
 import uk.ac.horizon.ug.exploding.client.model.ModelUtils;
@@ -183,11 +184,11 @@ public class Client {
 		return clientId;
 	}
 
-// move to selective Ack
-//	protected int ackSeq = 0;
-	protected List<Integer> ackSeqs = new LinkedList<Integer>();
 	protected int seqNo = 1;
-	
+// move to selective Ack
+//  protected int ackSeq = 0;
+    protected List<Integer> ackSeqs = new LinkedList<Integer>();
+    
 	/** connect */
 //	public boolean connect(/*List<String> classNames*/) throws /*JSONException,*/ IOException {
 //		
@@ -317,12 +318,13 @@ public class Client {
 	/** send queued messages */
 	public void sendQueuedMessages() {
 		while(true) {
+			QueuedMessage qm = null;
 			synchronized (queuedMessages) {
 				if (queuedMessages.isEmpty())
 					return;
-				QueuedMessage qm = queuedMessages.removeFirst();
-				sendQueuedMessage(qm);
+				qm = queuedMessages.removeFirst();
 			}
+			sendQueuedMessage(qm);
 		}	
 	}
 	private void sendQueuedMessage(QueuedMessage qm) {
@@ -512,6 +514,16 @@ public class Client {
 	public HashMap<String,HashMap<Object,Object>> getFacts() {
 		return facts;
 	}
+	public Object getFirstFact(String typeName) {
+		synchronized (facts) {
+			HashMap<Object,Object> typeFacts = facts.get(typeName);
+			if (typeFacts!=null && typeFacts.size()>0) {
+				return typeFacts.values().iterator().next();
+			}
+			return null;
+		}
+		
+	}
 	public List<Object> getFacts(String typeName) {
 		
 		synchronized (facts) {
@@ -531,13 +543,13 @@ public class Client {
 		msg.setSeqNo(seqNo++);
 		msg.setType(MessageType.POLL.name());
 		//msg.setToFollow(0);
-		synchronized (ackSeqs) {
-			int ackSeqsInt [] = new int[ackSeqs.size()];
-			for (int i=0; i<ackSeqs.size(); i++)
-				ackSeqsInt[i] = ackSeqs.get(i);
-			ackSeqs.clear();
-			msg.setAckSeqs(ackSeqsInt);
-		}
+        synchronized (ackSeqs) {
+            int ackSeqsInt [] = new int[ackSeqs.size()];
+            for (int i=0; i<ackSeqs.size(); i++)
+                    ackSeqsInt[i] = ackSeqs.get(i);
+            ackSeqs.clear();
+            msg.setAckSeqs(ackSeqsInt);
+        }
 		
 		QueuedMessage qm = new QueuedMessage();
 		qm.message = msg;
@@ -553,7 +565,7 @@ public class Client {
 				// selective ack
 				if (message.getSeqNo()>0) {
 					synchronized(ackSeqs) {
-						ackSeqs.add(message.getSeqNo());						
+						ackSeqs.add(message.getSeqNo());
 					}
 				}
 				MessageType messageType = MessageType.valueOf(message.getType());
@@ -670,6 +682,10 @@ public class Client {
 		}
 		if (o instanceof Zone) {
 			Zone p = (Zone)o;
+			return p.getID();
+		}
+		if (o instanceof Game) {
+			Game p = (Game)o;
 			return p.getID();
 		}
 		Log.d(TAG,"getFactID for unknown class "+o.getClass().getName());
