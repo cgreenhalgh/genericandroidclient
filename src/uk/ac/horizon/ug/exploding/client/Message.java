@@ -19,6 +19,8 @@
  */
 package uk.ac.horizon.ug.exploding.client;
 
+import java.util.Arrays;
+
 /**
  * @author cmg
  *
@@ -40,8 +42,12 @@ public class Message {
 	protected String handle;
 	/** ack seq - for ACK, ERROR, POLL and POLL_RESP */
 	protected Integer ackSeq;
+	/** new-style multi-ack */
+	protected int ackSeqs[];
 	/** messages to follow - for POLL/POLL_RESP */
 	protected Integer toFollow;
+	/** priority of required messages (POLL) or of message (ADD/UPD/DEL_FACT) */
+	protected Integer priority;
 	/** error code - for ERROR / ACK */
 	protected String /*MessageStatusType*/ status;
 	/** error message - for ERROR */
@@ -152,6 +158,18 @@ public class Message {
 		this.ackSeq = ackSeq;
 	}
 	/**
+	 * @return the ackSeqs
+	 */
+	public int[] getAckSeqs() {
+		return ackSeqs;
+	}
+	/**
+	 * @param ackSeqs the ackSeqs to set
+	 */
+	public void setAckSeqs(int[] ackSeqs) {
+		this.ackSeqs = ackSeqs;
+	}
+	/**
 	 * @return the toFollow
 	 */
 	public Integer getToFollow() {
@@ -162,6 +180,18 @@ public class Message {
 	 */
 	public void setToFollow(Integer toFollow) {
 		this.toFollow = toFollow;
+	}
+	/**
+	 * @return the priority
+	 */
+	public Integer getPriority() {
+		return priority;
+	}
+	/**
+	 * @param priority the priority to set
+	 */
+	public void setPriority(Integer priority) {
+		this.priority = priority;
 	}
 //	/**
 //	 * @return the status
@@ -195,11 +225,12 @@ public class Message {
 	}
 	@Override
 	public String toString() {
-		return "Message [ackSeq=" + ackSeq + ", errorMsg=" + errorMsg
+		return "Message [ackSeq=" + ackSeq + ", ackSeqs="
+				+ Arrays.toString(ackSeqs) + ", errorMsg=" + errorMsg
 				+ ", handle=" + handle + ", newVal=" + newVal + ", oldVal="
-				+ oldVal + ", seqNo=" + seqNo + ", status=" + status
-				+ ", subsIx=" + subsIx + ", time=" + time + ", toFollow="
-				+ toFollow + ", type=" + type + "]";
+				+ oldVal + ", priority=" + priority + ", seqNo=" + seqNo
+				+ ", status=" + status + ", subsIx=" + subsIx + ", time="
+				+ time + ", toFollow=" + toFollow + ", type=" + type + "]";
 	}
 	
 }
