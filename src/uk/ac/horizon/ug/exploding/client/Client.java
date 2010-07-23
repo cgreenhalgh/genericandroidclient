@@ -537,12 +537,12 @@ public class Client {
 	}
 	/** poll 
 	 * @throws JSONException */
-	public List<Message> poll() throws IOException {
+	public List<Message> poll(int toFollow) throws IOException {
 		log("poll");
 		Message msg = new Message();
 		msg.setSeqNo(seqNo++);
 		msg.setType(MessageType.POLL.name());
-		//msg.setToFollow(0);
+		msg.setToFollow(toFollow);
         synchronized (ackSeqs) {
             int ackSeqsInt [] = new int[ackSeqs.size()];
             for (int i=0; i<ackSeqs.size(); i++)
