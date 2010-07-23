@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent">
+
+<ScrollView
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent">
+
+<LinearLayout
+  android:orientation="vertical"
+  android:layout_width="fill_parent"
+  android:layout_height="wrap_content">
+
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="24px"
+	android:text="Device Date:"/>
+
+<TextView
+	android:id="@+id/clapperboard_device_date_text_view"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="64px"
+	android:text="{Device Date}"/>
+
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="24px"
+	android:text="Device Time:"/>
+
+<TextView
+	android:id="@+id/clapperboard_device_time_text_view"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="64px"
+	android:text="{Device Time}"/>
+
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="24px"
+	android:text="Device ID (IMEI):"/>
+
+<TextView
+	android:id="@+id/clapperboard_device_id_text_view"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="48px"
+	android:text="{Device ID}"/>
+
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="24px"
+	android:text="Client ID:"/>
+
+<TextView
+	android:id="@+id/clapperboard_client_id_text_view"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="48px"
+	android:text="{Client ID}"/>
+
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="24px"
+	android:text="Player Name:"/>
+
+<TextView
+	android:id="@+id/clapperboard_player_name_text_view"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="48px"
+	android:text="{Player Name}"/>
+
+<TextView
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="24px"
+	android:text="Location:"/>
+
+<TextView
+	android:id="@+id/clapperboard_location_text_view"
+	android:layout_width="wrap_content"
+	android:layout_height="wrap_content"
+	android:textSize="40px"
+	android:text="{Location}"/>
+
+
+</LinearLayout>
+
+</ScrollView>
+  
+</LinearLayout>
