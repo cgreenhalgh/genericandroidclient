@@ -91,6 +91,11 @@ public class HomeActivity extends LoggingActivity implements ClientStateListener
     		startedFromHome = true;
     		Log.d(TAG,"onNewIntent(MAIN,LAUNCHER): "+intent);
     	}
+    	else if (intent.getAction().equals(Intent.ACTION_VIEW) && 
+    			intent.getData()!=null && getString(R.string.gameUriScheme).equals(intent.getData().getScheme())) {
+    		startedFromHome = true;
+    		Log.d(TAG,"onNewIntent(VIEW,custom URI): "+intent);    		
+    	}
     	else
     		Log.d(TAG,"onNewIntent: "+intent);
 		super.onNewIntent(intent);

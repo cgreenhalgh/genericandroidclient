@@ -55,6 +55,12 @@
 // start here...
 $.ajaxSetup({cache:false,async:true,timeout:30000});
 
+function currentTimeMillis() {
+	// it seems like Date.getTime() might be in the local timezone (which stinks)
+	var d = new Date();
+	return d.getTime()+d.getTimezoneOffset() * 60000;
+}
+
 function get_lobbyclient() {
 	try {
 		return lobbyclient;
@@ -108,6 +114,21 @@ function uiTimeToString(time) {
 	return prettyTimeToLocalString(time);//new Date(time).toString();
 }
 
+//date to cookie format time:  Thu, 2 Aug 2001 20:47:11 UTC [~]
+var dayOfWeek = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+var month = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function timeToCookie(time) {
+	if (time==0)
+		return "Unspecified";
+	var date = new Date(time);
+	// TZ?
+	var str = dayOfWeek[date.getUTCDay()]+', '+date.getUTCDate()+' '+
+	month[date.getUTCMonth()]+' '+date.getUTCFullYear()+' '+
+	format(date.getUTCHours(),2)+':'+format(date.getUTCMinutes(),2)+':'+format(date.getUTCSeconds(),2)+' UTC';
+	return str;
+}
+
+
 function get_cookie_value(name) {
 	var cookie = document.cookie;
 	if (cookie!=undefined && cookie!=null) {
@@ -148,7 +169,7 @@ function test_storage() {
 		if (value=='some data') 
 			alert('cookie already set: '+value);
 		else {
-			document.cookie = 'lobby.game.js=some data; expires='+new Date(new Date().getTime()+1000*60*60*24*365)+'; path=/browser/';
+			document.cookie = 'lobby.game.js=some data; expires='+timeToCookie(currentTimeMillis()+1000*60*60*24*365)+'; path=/browser/';
 			value = get_cookie_value('lobby.game.js');
 			if (value=='some data')
 				alert('Hooray - cookie worked');
@@ -209,7 +230,7 @@ function init_persistence() {
 			// 1 year
 			// TODO fix: illegal format for expires: Fri Sep 16 2011 10:29:03 GMT+0000 (GMT)
 			// -> Thu, 2 Aug 2001 20:47:11 UTC [~]
-			document.cookie = key_prefix+'test=ok; expires='+new Date(new Date().getTime()+1000*60*60*24*365)+'; path=/browser/';
+			document.cookie = key_prefix+'test=ok; expires='+timeToCookie(currentTimeMillis()+1000*60*60*24*365)+'; path=/browser/';
 			cookies_ok = true;
 		} catch (err) {
 		}
@@ -226,7 +247,7 @@ function init_persistence() {
 				// 1 year
 				// TODO fix: illegal format for expires: Fri Sep 16 2011 10:29:03 GMT+0000 (GMT)
 				// -> Thu, 2 Aug 2001 20:47:11 UTC [~]
-				document.cookie = key_prefix+key+'='+encodeURIComponent(value)+'; expires='+new Date(new Date().getTime()+1000*60*60*24*365)+'; path=/browser/';
+				document.cookie = key_prefix+key+'='+encodeURIComponent(value)+'; expires='+timeToCookie(currentTimeMillis()+1000*60*60*24*365)+'; path=/browser/';
 				return;
 			}
 			persistence_type = 'Cookies';
@@ -513,7 +534,17 @@ $(document).ready(function() {
 	//alert('JSON: '+str+' -> '+obj+' -> '+$.toJSON(obj));
 	
 	show_query();
-
+	
+	// limit width 
+	var width = $(window).width();
+	// allow a 'bit' for scroll bars
+	if (width>20) {
+		//alert('width='+width);
+		$('#content').width(width-20);
+		$('#content').css('max-width',width-20);
+		// on join, response goes too long
+	}
+	
 	// test WebStorage...
 	init_persistence();
 	//alert('persistnce_type='+persistence_type+', localStorage='+localStorage+', myLocalStorage='+myLocalStorage+', game='+get_game());
@@ -561,7 +592,7 @@ function get_time_constraint() {
 	var includeStarted = $('input[name=includeStarted]').attr('checked');
 	timeConstraint.includeStarted = includeStarted!=null && includeStarted!='';
 
-	var now = new Date().getTime();
+	var now = currentTimeMillis();
 	var timeOptions = ['Now','Today','Tomorrow','Within a week','Any Time'];
 	// stop at 2am? Local time
 	var midnight = new Date(now);
@@ -665,6 +696,19 @@ var instanceItem = null;
 //		}
 //	}
 //}
+function getGameClientTemplate() {
+	if (instanceItem==undefined || instanceItem==null)
+		return undefined;
+	if (instanceItem.clientTemplates!=undefined) {
+		if (instanceItem.clientTemplates.length>0) {
+			if (instanceItem.clientTemplates[0].applicationLaunchId!=undefined) {
+				return instanceItem.clientTemplates[0];
+			}		
+		}
+	}
+	return undefined;
+}
+
 // join specific game
 function join_game(ix) {
 	instanceItem = instanceIndex.items[ix];
@@ -674,10 +718,13 @@ function join_game(ix) {
 		append_instance_table_item(table, instanceItem);
 		var disableCheckClient = true;
 		var clientUrl = undefined;
-		if (instanceItem.clientTemplates!=undefined && instanceItem.clientTemplates.length>0 && instanceItem.clientTemplates[0].applicationLaunchId!=undefined) {
-			disableCheckClient = false;
-			clientUrl = instanceItem.clientTemplates[0].applicationMarketId;
-		}		
+		// don't show the check for embedded, game specific.
+		// don't show the check if there are no client templates.
+		if (get_game()==undefined && getGameClientTemplate()!=undefined) {
+			clientUrl = getGameClientTemplate().appMarketUrl;
+			if (clientUrl!=undefined && clientUrl!=null)
+				disableCheckClient = false;
+		}
 		table.append('<tr><td><input class="queryOption" type="button" name="do_join" value="Join Game" onclick="do_join()"/>'+
 				(disableCheckClient ? '' : '<a href="'+clientUrl+'" target="client_check">Check Client</a>')+
 				'</td></tr>');
@@ -703,7 +750,7 @@ function get_game_join_request(type) {
 	//clientId, deviceId, nickname, deviceId, gameSlotId, type(RESERVE, RELEASE, PLAY, NEW_INSTANCE),
 	//clientType, clientTitle, majorVersion, minorVersion,
 	// latitudeE6, longitudeE6, newInstanceStartTime, newInstanceVisibility
-	request.time = new Date().getTime();
+	request.time = currentTimeMillis();
 	request.deviceId = get_client_id(); // unauthenticated!
 	if (os!=null) {
 		request.clientType = os[0];
@@ -723,6 +770,7 @@ function get_game_join_request(type) {
 function do_create() {
 	$('input[name=do_create]').attr('disabled', true);
 	var table = $('#create');
+	$('tr',table).remove();
 	table.append('<tr><td>Sending create game request...</td></tr>');
 	var request = get_game_join_request('NEW_INSTANCE');
 	// really, we need this!
@@ -742,30 +790,87 @@ function do_create() {
     		data: $.toJSON(request),
     		dataType: 'json',
     		success: function success(data, status) {
-				table.append('<tr><td>Status: '+data.status+'</td></tr>');
-				table.append('<tr><td>joinUrl: '+data.joinUrl+'</td></tr>');
-				table.append('<tr><td>playUrl: '+data.playUrl+'</td></tr>');
-				table.append('<tr><td>full response: '+$.toJSON(data)+'</td></tr>');
-				// TODO ...
+				$('input[name=do_join]').attr('disabled', false);
+				table.append('<tr><td>'+data.message+'</td></tr>');
+				if (data.status=='OK') {
+					// re-query! (for now)
+					show_query();
+					do_query();
+					alert('Game created!');
+				}
 			},
 			error: function error(req, status) {
+				$('input[name=do_join]').attr('disabled', false);
 				var msg = 'Sorry - there was a problem ('+req.status+': '+status+')';
 				table.append('<tr><td>'+msg+'</td></tr>');
 				alert(msg);
 			}
 		});
 	} catch (err) {
+		$('input[name=do_join]').attr('disabled', false);
 		var msg = 'Sorry - there was a problem ('+e.name+': '+e.message+')';
 		table.append('<tr><td>'+msg+'</td></tr>');
 		alert(msg);
 	}
 }
+function addParameter(url, name, value) {
+	if (url.indexOf('?')<0)
+		url = url+'?';
+	else
+		url = url+'&';
+	url = url+encodeURIComponent(name)+'='+encodeURIComponent(value);
+	return url;
+}
+// play!!
+function handle_play_ok(response) {
+	try {
+		// we need response.playUrl and response.playData ...
+		// playData is server-specific, e.g. (exploding places) conversationId, gameId, gameStatus
+		// these should all be added to the application Launch Url, which is in the 
+		// instanceIndex clientTemplates or in the lobbyclient environment.
+		var appLaunchUrl = undefined;
+		if (get_game()!=undefined)
+			appLaunchUrl = get_game().getAppLaunchUrl();
+		else {
+			var client = getGameClientTemplate();
+			if (client!=undefined) 
+				appLaunchUrl = client.appLaunchUrl;
+		}
+		if (appLaunchUrl==undefined) {
+			alert('Sorry - there is not enough information to start the client');
+			return;
+		}
+		if (response.playUrl!=undefined) {
+			appLaunchUrl = addParameter(appLaunchUrl, "playUrl", response.playUrl);
+		}
+		if (response.playData!=undefined) {
+			for (var key in response.playData) {
+				appLaunchUrl = addParameter(appLaunchUrl, key, response.playData[key]);
+			}
+		}
+		try {
+			//alert('try to open '+appLaunchUrl);
+			// if http/https assume browser-based and use a new window
+			// window.open doesn't seem to be picked up by my WebView at present :-(
+			if (get_lobbyclient()!=undefined)
+				get_lobbyclient().open(appLaunchUrl);
+			else
+				window.open(appLaunchUrl,'game_client');
+		}
+		catch(err) {
+			alert('Sorry - could not start game ('+err.message+')');
+		}
+	} catch (err) {
+		alert('Error: '+$.toJSON(err));
+	}
+}
 
-//confirm create
+//confirm join
 function do_join() {
 	$('input[name=do_join]').attr('disabled', true);
 	var table = $('#join');
-	table.append('<tr><td>Requesting join game request...</td></tr>');
+	$('tr',table).remove();
+	table.append('<tr><td>Requesting to join game...</td></tr>');
 	var request = get_game_join_request('PLAY');
 	try {
 		$.ajax({url: instanceItem.joinUrl, 
@@ -775,18 +880,29 @@ function do_join() {
     		data: $.toJSON(request),
     		dataType: 'json',
     		success: function success(data, status) {
-				table.append('<tr><td>Status: '+data.status+'</td></tr>');
-				table.append('<tr><td>playUrl: '+data.playUrl+'</td></tr>');
-				table.append('<tr><td>full response: '+$.toJSON(data)+'</td></tr>');
-				// TODO ...
+				$('input[name=do_join]').attr('disabled', false);
+				var msg = data.message==undefined ? data.status : data.message;
+				table.append('<tr><td>'+msg+'</td></tr>');
+				if (data.status=='TRY_LATER') 
+					;// no op
+				else if (data.status=='OK') {
+					handle_play_ok(data);
+					table.append('<tr><td>The client should be started!</td></tr>');
+				}
+				else {
+					// some kind of error
+					alert(msg);
+				}					
 			},
 			error: function error(req, status) {
+				$('input[name=do_join]').attr('disabled', false);
 				var msg = 'Sorry - there was a problem ('+req.status+': '+status+')';
 				table.append('<tr><td>'+msg+'</td></tr>');
 				alert(msg);
 			}
 		});
 	} catch (err) {
+		$('input[name=do_join]').attr('disabled', false);
 		var msg = 'Sorry - there was a problem ('+e.name+': '+e.message+')';
 		table.append('<tr><td>'+msg+'</td></tr>');
 		alert(msg);

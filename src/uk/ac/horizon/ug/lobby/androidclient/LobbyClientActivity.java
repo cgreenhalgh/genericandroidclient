@@ -12,13 +12,14 @@ import uk.ac.horizon.ug.exploding.client.R;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.DialogInterface.OnClickListener;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -49,6 +50,7 @@ public class LobbyClientActivity extends Activity {
 //        Button button = (Button)findViewById(R.id.go_to_default);
 //        button.setOnClickListener(this);
         mWebView = (WebView) findViewById(R.id.lobbyclientWebview);
+        mWebView.setBackgroundColor(0xff000000);
         WebSettings webSettings = mWebView.getSettings();
         webSettings.setSavePassword(false);          
         webSettings.setSaveFormData(false);         
@@ -83,6 +85,7 @@ public class LobbyClientActivity extends Activity {
 	class GameJavaScriptInterface {
 		private String indexJson;
 		private String queryUrl;
+		private String appLaunchUrl;
 		public synchronized String getIndexJson() {
 			if (indexJson==null) {
 				// ensure string " are escaped!
@@ -96,6 +99,12 @@ public class LobbyClientActivity extends Activity {
 				queryUrl = getString(R.string.lobbyQueryUrl);
 			Log.i(TAG,"return queryUrl "+queryUrl);
 			return queryUrl;
+		}
+		public synchronized String getAppLaunchUrl() {
+			if (appLaunchUrl==null)
+				appLaunchUrl = getString(R.string.gameUriScheme)+":///";
+			Log.i(TAG,"return appLaunchUrl "+appLaunchUrl);
+			return appLaunchUrl;
 		}
 	}
 	// JS interface, as lobbyclient
@@ -112,6 +121,16 @@ public class LobbyClientActivity extends Activity {
 			if (localStorage==null)
 				localStorage = new LocalStorageJavaScriptInterface();
 			return localStorage;
+		}
+		/** for some reason window.load doesn't seem to call the shouldOverrideUrlLoading method */
+		public void open(String url) {
+			Log.i(TAG,"load("+url+")");
+			if (url.startsWith("javascript:"))
+				mWebView.loadUrl(url);//leave to webview
+			else if (url.startsWith("file:"))
+				mWebView.loadUrl(url);//leave to webview, e.g. local resources
+			else
+				viewUrl(url);			
 		}
 	}	
 	
@@ -134,6 +153,19 @@ public class LobbyClientActivity extends Activity {
 		}
 	}
 	
+	void showAlert(String message) {
+		AlertDialog.Builder builder = new AlertDialog.Builder(LobbyClientActivity.this);
+		builder.setMessage(message);
+		builder.setCancelable(true);
+		builder.setNeutralButton("OK", new OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				dialog.dismiss();
+			}
+		});
+		AlertDialog alert = builder.create();
+		alert.show();
+	}
 	
 	/**       
 	 * Provides a hook for calling "alert" from javascript. Useful for       
@@ -143,11 +175,7 @@ public class LobbyClientActivity extends Activity {
 		@Override          
 		public boolean onJsAlert(WebView view, String url, String message, JsResult result) {   
 			Log.d(TAG, message);     
-			AlertDialog.Builder builder = new AlertDialog.Builder(LobbyClientActivity.this);
-			builder.setMessage(message);
-			builder.setCancelable(true);
-			AlertDialog alert = builder.create();
-			alert.show();
+			showAlert(message);
 			//Toast.makeText(LobbyClientActivity.this, message, Toast.LENGTH_LONG).show();
 			result.confirm();     
 			return true;     
@@ -162,14 +190,26 @@ public class LobbyClientActivity extends Activity {
 			// TODO Auto-generated method stub
 			super.onConsoleMessage(message, lineNumber, sourceID);
 			Log.d(TAG,"ConsoleMessage: "+message+" ("+lineNumber+", "+sourceID+")");
-			AlertDialog.Builder builder = new AlertDialog.Builder(LobbyClientActivity.this);
-			builder.setMessage("Sorry - there is a problem with the client ("+message+" at "+sourceID+" line "+lineNumber+")");
-			builder.setCancelable(true);
-			AlertDialog alert = builder.create();
-			alert.show();
+			showAlert("Sorry - there is a problem with the client ("+message+" at "+sourceID+" line "+lineNumber+")");
 		}
 		
 	}  
+	
+	private void viewUrl(String url) {
+		// try to start handler...
+		try {
+			Uri uri = Uri.parse(url);
+			Log.d(TAG,"VIEW "+uri);
+			Intent i = new Intent(Intent.ACTION_VIEW, uri);
+			// Flags?
+			startActivity(i);
+		}
+		catch (Exception e) {
+			Log.w(TAG, "Could not open "+url, e);
+			showAlert("Sorry - could not open link ("+e.getMessage()+")");
+		}
+
+	}
 	
 	class MyWebViewClient extends WebViewClient {
 
@@ -180,7 +220,12 @@ public class LobbyClientActivity extends Activity {
 		public boolean shouldOverrideUrlLoading(WebView view, String url) {
 			// TODO Auto-generated method stub
 			Log.i(TAG,"shouldOverrideUrlLoading("+url+")");
-			return super.shouldOverrideUrlLoading(view, url);
+			if (url.startsWith("javascript:"))
+				return false;//leave to webview
+			if (url.startsWith("file:"))
+				return false;//leave to webview, e.g. local resources
+			viewUrl(url);
+			return true;//we'll deal with it
 		}
 
 		/* (non-Javadoc)
