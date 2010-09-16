@@ -1,0 +1,83 @@
+/* CSS for game.html lobby client */
+
+body {
+	background-color: #222222;/*000000;*/
+}
+
+.queryLabel {
+	color: #cccccc;
+	font-size: 14px;
+	font-family: sans-serif;
+}
+
+.queryOption {
+	color: #ffffff;
+	font-size: 16px;
+	font-family: sans-serif;
+	background-color: #222222;
+}
+
+.queryOption[disabled] {
+	color: #808080;
+	font-size: 16px;
+	font-family: sans-serif;
+	background-color: #222222;
+}
+
+/* the game template table */
+.titleTable {
+	width: 100%;
+	border: 1;
+	border-color: #ff0000;
+}
+
+.titleTable h2,a {
+	color: #ffffff;
+	font-size: 16px;
+	font-family: sans-serif;
+	margin-bottom: 1px;
+}
+
+.titleTable a {
+	text-decoration: underline;
+}
+
+.titleTable td {
+	color: #ffffff;
+	font-size: 14px;
+	font-family: sans-serif;
+}
+
+.titleTable p {
+	color: #cccccc;
+	font-size: 12px;
+	font-family: sans-serif;
+}
+
+/* the game instance table */
+.listTable {
+	width: 100%;
+	border: 1;
+	border-color: #ff0000;
+}
+
+.listTable h3 {
+	color: #ffffff;
+	font-size: 14px;
+	font-family: sans-serif;
+	margin-bottom: 1px;
+}
+
+.listTable p {
+	color: #cccccc;
+	font-size: 12px;
+	font-family: sans-serif;
+	margin-top: 1px;
+	margin-bottom: 1px;
+}
+
+.listTable td {
+	color: #ffffff;
+	font-size: 14px;
+	font-family: sans-serif;
+}

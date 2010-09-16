@@ -1,0 +1,80 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!-- The HTML 4.01 Transitional DOCTYPE declaration-->
+<!-- above set at the top of the file will set     -->
+<!-- the browser's rendering engine into           -->
+<!-- "Quirks Mode". Replacing this declaration     -->
+<!-- with a "Standards Mode" doctype is supported, -->
+<!-- but may lead to some differences in layout.   -->
+
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width"/>
+	<!-- <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/> -->
+    <title>Lobby Browser</title>
+    <link rel="stylesheet" type="text/css" href="game.css" />
+    
+    <script type = "text/javascript" src="jquery-1.4.2.min.js"></script>
+    <script type = "text/javascript" src="jquery.json-2.2.min.js"></script>
+    <script type = "text/javascript" src="common_utils.js"></script>
+    <script type = "text/javascript" src="game.js"></script>
+    <script type = "text/javascript">
+    </script>
+  </head>
+
+  <body>
+  	<div id="game_div" >
+    	<table id="game" class="titleTable"></table>
+	</div>
+	<div id="query_div">
+		<form action="dummy">
+			<table>
+				<tr><td class="queryLabel">When?</td></tr>
+				<tr><td>
+					<!-- cf var timeOptions -->
+					<select name="timeOption" class="queryOption">
+						<option value="0">Now</option>
+						<option value="1" >Today</option>
+						<option value="2" >Tomorrow</option>
+						<option value="3" >Within a week</option>
+						<option value="4" >Any time</option>
+					</select>
+				</td></tr>
+				<tr><td class="queryLabel"><input type="checkbox"  name="includeStarted" checked="true"/>Include started</td></tr>
+				<tr><td class="queryLabel">Where?</td></tr>
+				<tr><td>
+					<!-- cf var timeOptions -->
+					<select name="rangeOption" onchange="update_search_disabled()" class="queryOption">
+						<option value="0">Here</option>
+						<option value="1" >Up to 1.5 km</option>
+						<option value="2" >Up to 5 km</option>
+						<option value="3" >Up to 15 km</option>
+						<option value="4" >Up to 50 km</option>
+						<option value="5" >Up to 150 km</option>
+						<option value="6" >Up to 500 km</option>
+						<option value="7" >Anywhere</option>
+					</select>
+				</td></tr>
+				<tr><td id="locationStatus" class="queryLabel"></td></tr>
+				<tr><td class="queryLabel"><input type="checkbox"  name="includeClient" checked="true"/><span id="client" class="queryLabel"></span></td></tr>
+				<tr><td id="clientId" class="queryLabel"></td></tr>
+				<tr><td><input class="queryOption" type="button" name="search" value="Search for games..." disabled="true" onclick="do_query()"/></td></tr>
+			</table>
+		</form>
+	</div>
+  	<div id="list_div">
+  		<input class="queryOption" type="button" value="Search again" onclick="show_query()"/><br/>
+    	<table id="list" class="listTable"></table>
+	</div>
+  	<div id="create_div">
+  		<input class="queryOption" type="button" value="Search again" onclick="show_query()"/>
+  		<input class="queryOption" type="button" value="Back to list" onclick="show_list()"/><br/>
+    	<table id="create" class="listTable"></table>
+	</div>
+  	<div id="join_div">
+  		<input class="queryOption" type="button" value="Search again" onclick="show_query()"/>
+  		<input class="queryOption" type="button" value="Back to list" onclick="show_list()"/><br/>
+    	<table id="join" class="listTable"></table>
+	</div>
+  </body>
+</html>
